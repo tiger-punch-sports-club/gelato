@@ -1,0 +1,51 @@
+cmake_minimum_required(VERSION 3.0)
+project(gelato89)
+
+SET (PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/source")
+SET (EXTERNALS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external")
+SET (XXHASH_SOURCE_DIR "${PROJECT_SOURCE_DIR}/external/xxHash")
+
+include_directories(${PROJECT_SOURCE_DIR} ${EXTERNALS_INCLUDE_DIR})
+MESSAGE ("Source path: ${PROJECT_SOURCE_DIR}")
+
+add_library(
+    xxhash 
+    ${XXHASH_SOURCE_DIR}/xxhash.c
+    ${XXHASH_SOURCE_DIR}/xxhsum.c
+)
+
+# gelato89 renderer lib
+add_library(
+    gelato89 
+    ${PROJECT_SOURCE_DIR}/hash.c
+    ${PROJECT_SOURCE_DIR}/utils.c
+    ${PROJECT_SOURCE_DIR}/content_package.c
+    ${PROJECT_SOURCE_DIR}/hash_table.c
+    ${PROJECT_SOURCE_DIR}/renderer.c
+)
+target_link_libraries(gelato89 PUBLIC ${opengl} PRIVATE xxhash)
+
+# project content package tool
+project(gelato89-cpt CXX)
+SET (CPT_DIR "${PROJECT_SOURCE_DIR}/tools/content_package_tool")
+
+add_executable(
+    gelato89-cpt 
+    ${CPT_DIR}/cpt.cpp
+    ${CPT_DIR}/glob.c
+)
+
+target_link_libraries(gelato89-cpt PRIVATE gelato89)
+
+# project sandbox
+project(gelato89-sandbox CXX)
+SET (PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/sandbox")
+SET (GLFW_SOURCE_DIR "vendor/glfw-3.3")
+
+# glfw 3.3
+add_subdirectory(${GLFW_SOURCE_DIR})
+
+# darnkess99-sandbox cpp application
+add_executable(gelato89-sandbox ${PROJECT_SOURCE_DIR}/sandbox.cpp)
+target_include_directories(gelato89-sandbox PRIVATE ${GLFW_SOURCE_DIR}/include)
+target_link_libraries(gelato89-sandbox PUBLIC glfw ${GLFW_LIBRARIES} PRIVATE gelato89)
