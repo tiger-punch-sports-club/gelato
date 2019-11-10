@@ -4,9 +4,12 @@ project(gelato89)
 SET (PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/source")
 SET (EXTERNALS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external")
 SET (XXHASH_SOURCE_DIR "${PROJECT_SOURCE_DIR}/external/xxHash")
+SET (GLEW_DIR "${PROJECT_SOURCE_DIR}/external/glew-2.1.0")
 
-include_directories(${PROJECT_SOURCE_DIR} ${EXTERNALS_INCLUDE_DIR})
+include_directories(${PROJECT_SOURCE_DIR} ${EXTERNALS_INCLUDE_DIR} ${GLEW_DIR}/include)
 MESSAGE ("Source path: ${PROJECT_SOURCE_DIR}")
+
+find_package(OpenGL REQUIRED)
 
 add_library(
     xxhash 
@@ -14,16 +17,22 @@ add_library(
     ${XXHASH_SOURCE_DIR}/xxhsum.c
 )
 
+add_library(
+    glew
+    ${GLEW_DIR}/src/glew.c
+)
+target_compile_definitions(glew PUBLIC GLEW_STATIC)
+
 # gelato89 renderer lib
 add_library(
-    gelato89 
+    gelato89
     ${PROJECT_SOURCE_DIR}/hash.c
     ${PROJECT_SOURCE_DIR}/utils.c
     ${PROJECT_SOURCE_DIR}/content_package.c
     ${PROJECT_SOURCE_DIR}/hash_table.c
     ${PROJECT_SOURCE_DIR}/renderer.c
 )
-target_link_libraries(gelato89 PUBLIC ${opengl} PRIVATE xxhash)
+target_link_libraries(gelato89 PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE xxhash PRIVATE glew)
 
 # project content package tool
 project(gelato89-cpt CXX)
