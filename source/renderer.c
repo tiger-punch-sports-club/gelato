@@ -2,9 +2,20 @@
 #include <assert.h>
 #include <GL/glew.h>
 
+
+void load_shaders(Renderer* renderer)
+{
+
+}
+
+/********************************************************
+********************* PUBLIC API ************************
+********************************************************/
+
 Renderer create_renderer(RendererDescription renderer_description)
 {
-    Renderer renderer  = { 0 };
+    Renderer renderer = { 0 };
+    load_shaders(&renderer);
     return renderer;
 }
 
@@ -21,7 +32,7 @@ void deinitialize_renderer(Renderer* renderer)
 
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(1.0f, 0.3f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
