@@ -14,8 +14,8 @@ typedef short				int16;
 typedef int					int32;
 typedef long long			int64;
 
-#define GELATO_HASH_SEED 0xD34DBABE
-#define GELATO_CONTENT_PACKAGE_MAGIC 0xD34DBABE
+#define GELATO_HASH_SEED 0xCAFEBABE
+#define GELATO_CONTENT_PACKAGE_MAGIC 0xCAFEBABE
 
 #define GL_CHECK(function) 
 
