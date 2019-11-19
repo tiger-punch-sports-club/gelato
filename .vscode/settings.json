@@ -3,6 +3,11 @@
         "assert.h": "c",
         "renderer.h": "c",
         "functional": "cpp",
-        "texture.h": "c"
+        "texture.h": "c",
+        "xiosbase": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp"
     }
 }

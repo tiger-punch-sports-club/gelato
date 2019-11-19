@@ -9,6 +9,13 @@ extern "C"
 	#include <renderer.h>
 }
 
+Renderer* g_renderer;
+void on_window_resized(GLFWwindow* window, int width, int height)
+{
+	glfwGetFramebufferSize(window, &width, &height);
+	renderer_resize(g_renderer, width, height);
+}
+
 int main(void)
 {
 	if (glfwInit())
@@ -33,10 +40,12 @@ int main(void)
 	description._window_width = 640;
 	description._window_height = 480;
 	description._render_width = 640;
-	description._window_height = 480;
+	description._render_height = 480;
 
 	Renderer renderer = create_renderer(description);
 	initialize_renderer(&renderer);
+	g_renderer = &renderer;
+	glfwSetWindowSizeCallback(window, on_window_resized);
 
 	while (!glfwWindowShouldClose(window))
 	{

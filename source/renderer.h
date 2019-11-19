@@ -30,16 +30,21 @@ typedef struct Sprite
 
 typedef struct RendererDescription
 {
-    uint64 _render_width;
-    uint64 _render_height;
-    uint64 _window_width;
-    uint64 _window_height;
+    uint32 _render_width;
+    uint32 _render_height;
+
+    uint32 _window_width;
+    uint32 _window_height;
 } RendererDescription;
 
 typedef struct Renderer
 {
-    uint64 _render_width;
-    uint64 _render_height;
+    uint32 _window_width;
+    uint32 _window_height;
+    uint32 _virtual_target_width;
+    uint32 _virtual_target_height;
+    uint32 _render_width;
+    uint32 _render_height;
 
     Shader _sprite_shader;
     Shader _to_screen_shader;
@@ -50,7 +55,7 @@ typedef struct Renderer
 Renderer create_renderer(RendererDescription renderer_description);
 void initialize_renderer(Renderer* renderer);
 void deinitialize_renderer(Renderer* renderer);
-void resize(Renderer* renderer, uint64 window_width, uint64 window_height);
+void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height);
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count);
 
 Sprite create_sprite(TextureId texture);
