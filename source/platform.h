@@ -14,10 +14,18 @@ typedef short				int16;
 typedef int					int32;
 typedef long long			int64;
 
+void check_gl_error(const char* file_name, int line_number);
+
 #define GELATO_HASH_SEED 0xCAFEBABE
 #define GELATO_CONTENT_PACKAGE_MAGIC 0xCAFEBABE
 
-#define GL_CHECK(function) function
+#if __DEBUG__
+    #define GL_CHECK(function) function
+#else
+    #define GL_CHECK(function)\
+    function;\
+    check_gl_error(__FILE__, __LINE__);
+#endif
 
 #define ARRAY_SIZE(array) \
     sizeof(array) / sizeof(array[0]) 

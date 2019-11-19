@@ -51,7 +51,6 @@ Renderer create_renderer(RendererDescription renderer_description);
 void initialize_renderer(Renderer* renderer);
 void deinitialize_renderer(Renderer* renderer);
 void resize(Renderer* renderer, uint64 window_width, uint64 window_height);
-
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count);
 
 Sprite create_sprite(TextureId texture);

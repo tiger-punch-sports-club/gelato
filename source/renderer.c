@@ -24,7 +24,20 @@ void destroy_shaders(Renderer* renderer)
 
 void init_render_target(Renderer* renderer)
 {
-    
+    TextureDescription texture_desc =
+    { 
+        ._width = renderer->_render_width,
+        ._height = renderer->_render_height,
+        ._format = TextureFormats._rgba,
+        ._internal_format = TextureInternalFormats._rgba8,
+        ._type = TextureTypes._float,
+        ._wrap_s = TextureWraps._clamp_to_edge,
+        ._wrap_t = TextureWraps._clamp_to_edge,
+        ._min_filter = TextureMinFilters._linear,
+        ._mag_filter = TextureMagFilters._linear
+    };
+
+    renderer->_render_target = create_texture(texture_desc, NULL);
 }
 
 void set_gl_state_pre_render()

@@ -81,18 +81,18 @@ extern const struct TextureWraps
 
 extern const struct TextureMinFilters
 {
-    TextureType _nearest;
-    TextureType _linear;
-    TextureType _nearest_mipmap_nearest;
-    TextureType _linear_mipmap_nearest;
-    TextureType _nearest_mipmap_linear;
-    TextureType _linear_mipmap_linear;
+    TextureMinFilter _nearest;
+    TextureMinFilter _linear;
+    TextureMinFilter _nearest_mipmap_nearest;
+    TextureMinFilter _linear_mipmap_nearest;
+    TextureMinFilter _nearest_mipmap_linear;
+    TextureMinFilter _linear_mipmap_linear;
 } TextureMinFilters;
 
 extern const struct TextureMagFilters
 {
-    TextureType _nearest;
-    TextureType _linear;
+    TextureMagFilter _nearest;
+    TextureMagFilter _linear;
 } TextureMagFilters;
 
 TextureId create_texture(TextureDescription texture_description, void* data);
