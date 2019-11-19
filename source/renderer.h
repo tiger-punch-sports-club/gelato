@@ -1,5 +1,6 @@
 #pragma once
 #include "platform.h"
+#include "texture.h"
 
 typedef struct Transform
 {
@@ -20,16 +21,6 @@ typedef struct Shader
     ShaderId _vertex_shader;
     ShaderId _fragment_shader;
 } Shader;
-
-typedef struct TextureDescription
-{
-    uint64 _id;
-} TextureDescription;
-
-typedef struct TextureId
-{
-    uint64 _id;
-} TextureId;
 
 typedef struct Sprite
 {
@@ -62,8 +53,5 @@ void deinitialize_renderer(Renderer* renderer);
 void resize(Renderer* renderer, uint64 window_width, uint64 window_height);
 
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count);
-
-TextureId create_texture(TextureDescription texture_description, void* data);
-void destroy_texture(TextureId texture);
 
 Sprite create_sprite(TextureId texture);

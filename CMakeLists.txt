@@ -30,6 +30,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/utils.c
     ${PROJECT_SOURCE_DIR}/content_package.c
     ${PROJECT_SOURCE_DIR}/hash_table.c
+    ${PROJECT_SOURCE_DIR}/texture.c
     ${PROJECT_SOURCE_DIR}/renderer.c
 )
 target_link_libraries(gelato89 PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE xxhash PRIVATE glew)

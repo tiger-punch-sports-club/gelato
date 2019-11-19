@@ -30,6 +30,11 @@ int main(void)
   	glfwMakeContextCurrent(window);
 
 	RendererDescription description = { 0 };
+	description._window_width = 640;
+	description._window_height = 480;
+	description._render_width = 640;
+	description._window_height = 480;
+
 	Renderer renderer = create_renderer(description);
 	initialize_renderer(&renderer);
 

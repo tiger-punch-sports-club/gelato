@@ -21,3 +21,34 @@ typedef long long			int64;
 
 #define ARRAY_SIZE(array) \
     sizeof(array) / sizeof(array[0]) 
+
+
+
+// void Shader::check_error(uint32 shaderID, std::string type, std::string path)
+// 		{
+// 			char error[1024];
+// 			glGetShaderInfoLog(shaderID, 1024, nullptr, error);
+// #if DEVELOPMENT == 1
+// 			SHF_PRINTF("CheckError for %s, Type = %s \n", path.c_str(), type.c_str());
+// 			SHF_PRINTF("\n%s\n", error);
+
+// 			GLint success = 0;
+// 			glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
+
+// 			if (success == 0)
+// 			{
+// #ifdef PLATFORM_WINDOWS
+// 				std::string error_message = type + "\n" + path + "\n" + std::string(error);
+// 				MessageBoxA(NULL, error_message.c_str(), "Shader compile error", MB_OK | MB_ICONERROR);
+// #endif
+// 				ASSERT_DISAPPOINTED(error_message.c_str());
+// 			}
+// #endif
+// 		}
+
+
+//  int err = glGetError();
+//             if (err != 0)
+//             {
+//                 SHF_PRINTF("Error %d happened BEFORE initializing Texture2D (%s | %s) \n", err, _name.c_str(), _path.c_str());
+//             }
