@@ -17,7 +17,7 @@ typedef long long			int64;
 #define GELATO_HASH_SEED 0xCAFEBABE
 #define GELATO_CONTENT_PACKAGE_MAGIC 0xCAFEBABE
 
-#define GL_CHECK(function) 
+#define GL_CHECK(function) function
 
 #define ARRAY_SIZE(array) \
     sizeof(array) / sizeof(array[0]) 
