@@ -13,14 +13,8 @@ typedef struct Transform
 
 typedef struct ShaderId
 {
-    uint64 _id;
+    uint32 _id;
 } ShaderId;
-
-typedef struct Shader
-{
-    ShaderId _vertex_shader;
-    ShaderId _fragment_shader;
-} Shader;
 
 typedef struct Sprite
 {
@@ -48,8 +42,8 @@ typedef struct Renderer
     float _pixel_scale_x;
     float _pixel_scale_y;
 
-    Shader _sprite_shader;
-    Shader _to_screen_shader;
+    ShaderId _sprite_shader;
+    ShaderId _to_screen_shader;
 
     TextureId _render_target;
 } Renderer;
