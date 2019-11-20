@@ -122,7 +122,7 @@ void max_resolution_aspect_ratio(float target_resolution_width, float target_res
     *new_height = (float) height;
 }
 
-void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32 virtual_target_width, uint32 virtual_target_height, uint32* new_width, uint32* new_height)
+void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32 virtual_target_width, uint32 virtual_target_height, uint32* new_width, uint32* new_height, float* pixel_scale_x, float* pixel_scale_y)
 {
     float virtual_width = (float) virtual_target_width;
     float virtual_height = (float) virtual_target_height;
@@ -136,6 +136,9 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
 
     *new_width = (uint32) width;
     *new_height = (uint32) height;
+
+    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width; 
+    *pixel_scale_y = height / virtual_height;   // win_height / virtual_height;
 }
 
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
@@ -143,7 +146,7 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
     renderer->_window_width = window_width;
     renderer->_window_height = window_height;
 
-    fit_to_virtual_resolution(renderer->_window_width, renderer->_window_height, renderer->_virtual_target_width, renderer->_virtual_target_height, &renderer->_render_width, &renderer->_render_height);
+    fit_to_virtual_resolution(renderer->_window_width, renderer->_window_height, renderer->_virtual_target_width, renderer->_virtual_target_height, &renderer->_render_width, &renderer->_render_height, &renderer->_pixel_scale_x, &renderer->_pixel_scale_y);
 }
 
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)

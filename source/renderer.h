@@ -45,6 +45,8 @@ typedef struct Renderer
     uint32 _virtual_target_height;
     uint32 _render_width;
     uint32 _render_height;
+    float _pixel_scale_x;
+    float _pixel_scale_y;
 
     Shader _sprite_shader;
     Shader _to_screen_shader;
