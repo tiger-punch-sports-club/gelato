@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
+#include "stb_image.h"
+
 extern "C" 
 {
 	#include <renderer.h>
@@ -47,9 +49,32 @@ int main(void)
 	g_renderer = &renderer;
 	glfwSetWindowSizeCallback(window, on_window_resized);
 
+	// load texture
+	const char* pineapple_image_path = "content/pineapple.png";
+	FILE* file = fopen(pineapple_image_path, "rb");
+	int image_width, image_height, image_channels;
+	unsigned char* data = stbi_load_from_file(file, &image_width, &image_height, &image_channels, 0);
+	fclose(file);
+
+	// create texture
+	TextureId texture = create_texture((TextureDescription) {
+		    ._width = (uint32)image_width,
+		    ._height = (uint32)image_height,
+		    ._format = TextureFormats._rgba,
+			._internal_format = TextureInternalFormats._rgba8,
+			._type = TextureTypes._unsigned_byte,
+			._wrap_s = TextureWraps._clamp_to_edge,
+			._wrap_t = TextureWraps._clamp_to_edge,
+			._min_filter = TextureMinFilters._nearest,
+    		._mag_filter = TextureMagFilters._nearest
+	}, (void*) data);
+	
+	// create sprite
+	Sprite sprite = create_sprite(texture);
+
 	while (!glfwWindowShouldClose(window))
 	{
-		render(&renderer, nullptr, 0);
+		render(&renderer, &sprite, 1);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}

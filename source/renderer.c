@@ -11,6 +11,8 @@ void destroy_shaders(Renderer* renderer);
 void init_render_target(Renderer* renderer);
 void set_gl_state_pre_render(Renderer* renderer);
 void set_gl_state_post_render();
+void init_quad(Renderer* renderer);
+void destroy_quad(Renderer* renderer);
 
 void check_shader_error(ShaderId shader)
 {
@@ -123,6 +125,16 @@ void set_gl_state_post_render()
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 }
 
+void init_quad(Renderer* renderer)
+{
+
+}
+
+void destroy_quad(Renderer* renderer)
+{
+    
+}
+
 /********************************************************
 ********************* PUBLIC API ************************
 ********************************************************/
@@ -149,10 +161,12 @@ void initialize_renderer(Renderer* renderer)
 
     init_shaders(renderer);
     init_render_target(renderer);
+    init_quad(renderer);
 }
 
 void deinitialize_renderer(Renderer* renderer)
 {
+    destroy_quad(renderer);
     destroy_texture(renderer->_render_target);
     destroy_shaders(renderer);
 }
@@ -207,7 +221,10 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
     
-    // render
+    // todo:
+    // 	--> copy quad data 
+	//	--> send data to gpu
+	// render sprite
 
     set_gl_state_post_render();
 }

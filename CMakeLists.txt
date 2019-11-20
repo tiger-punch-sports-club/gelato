@@ -54,6 +54,10 @@ SET (GLFW_SOURCE_DIR "vendor/glfw-3.3")
 add_subdirectory(${GLFW_SOURCE_DIR})
 
 # darnkess99-sandbox cpp application
-add_executable(gelato89-sandbox ${PROJECT_SOURCE_DIR}/sandbox.cpp)
+add_executable(
+                gelato89-sandbox 
+                ${PROJECT_SOURCE_DIR}/sandbox.cpp
+                ${PROJECT_SOURCE_DIR}/stb_image.c
+)
 target_include_directories(gelato89-sandbox PRIVATE ${GLFW_SOURCE_DIR}/include)
 target_link_libraries(gelato89-sandbox PUBLIC glfw ${GLFW_LIBRARIES} PRIVATE gelato89)

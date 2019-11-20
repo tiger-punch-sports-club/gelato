@@ -3,43 +3,43 @@
 
 typedef struct TextureFormat
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureFormat;
 
 typedef struct TextureInternalFormat
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureInternalFormat;
 
 typedef struct TextureType
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureType;
 
 typedef struct TextureWrap
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureWrap;
 
 typedef struct TextureMinFilter
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureMinFilter;
 
 typedef struct TextureMagFilter
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureMagFilter;
 
 typedef struct TextureTarget
 {
-    uint64 _gl_enum;
+    uint32 _gl_enum;
 } TextureTarget;
 
 typedef struct TextureDescription
 {
-    uint64 _width;
-    uint64 _height;
+    uint32 _width;
+    uint32 _height;
     TextureFormat _format;
     TextureInternalFormat _internal_format;
     TextureType _type;
