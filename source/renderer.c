@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
-void check_shader_error();
-ShaderId compile_shader(uint32 shader_type, const char* source);
+void check_shader_error(uint32 shader);
+uint32 compile_shader(uint32 shader_type, const char* source);
 void init_shaders(Renderer* renderer);
 void destroy_shader(ShaderId* shader);
 void destroy_shaders(Renderer* renderer);
@@ -14,17 +14,17 @@ void set_gl_state_post_render();
 void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
 
-void check_shader_error(ShaderId shader)
+void check_shader_error(uint32 shader)
 {
     char error[1024];
-    GL_CHECK(glGetShaderInfoLog(shader._id, 1024, NULL, error));
+    GL_CHECK(glGetShaderInfoLog(shader, 1024, NULL, error));
 
     GLint success = 0;
-    GL_CHECK(glGetShaderiv(shader._id, GL_COMPILE_STATUS, &success));
+    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
 
     if (success == 0)
     {
-        printf("Shader error log for: %d\n%s\n", shader._id, error);
+        printf("Shader error log for: %d\n%s\n", shader, error);
     }
     
     assert(success != 0);
@@ -33,21 +33,29 @@ void check_shader_error(ShaderId shader)
 void init_shaders(Renderer* renderer)
 {
     ShaderId shader_program = { glCreateProgram() };
-    ShaderId vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\n}\n");
-    ShaderId fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture(SpriteTexture, outVertexUV);\n}\n");
+    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\n}\n");
+    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture(SpriteTexture, outVertexUV);\n}\n");
 
-    GL_CHECK(glAttachShader(shader_program._id, vertex_shader._id));
-    GL_CHECK(glAttachShader(shader_program._id, fragment_shader._id));
+    GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
+    GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
 
     GL_CHECK(glLinkProgram(shader_program._id));
     GL_CHECK(glUseProgram(shader_program._id));
 
-    GL_CHECK(glDeleteShader(vertex_shader._id));
-    GL_CHECK(glDeleteShader(fragment_shader._id));
+    GL_CHECK(glDeleteShader(vertex_shader));
+    GL_CHECK(glDeleteShader(fragment_shader));
 
     GL_CHECK(glUseProgram(0));
 
-    renderer->_sprite_shader = shader_program;
+    renderer->_sprite_shader = (SimpleSpriteShader)
+    { 
+        ._shader = shader_program,
+        ._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
+        ._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
+        ._uv_offset_location = glGetUniformLocation(shader_program._id, "UvOffset"),
+        ._uv_scale_location = glGetUniformLocation(shader_program._id, "UvScale"),
+        ._sprite_texture_location = glGetUniformLocation(shader_program._id, "SpriteTexture")
+    };
 }
 
 void destroy_shader(ShaderId* shader)
@@ -61,20 +69,19 @@ void destroy_shader(ShaderId* shader)
 
 void destroy_shaders(Renderer* renderer)
 {
-    destroy_shader(&renderer->_sprite_shader);
-    destroy_shader(&renderer->_to_screen_shader);
+    destroy_shader(&renderer->_sprite_shader._shader);
+    destroy_shader(&renderer->_to_screen_shader._shader);
 }
 
-ShaderId compile_shader(uint32 shader_type, const char* source)
+uint32 compile_shader(uint32 shader_type, const char* source)
 {
     uint32 shader_id = GL_CHECK(glCreateShader(shader_type));
 
     GL_CHECK(glShaderSource(shader_id, 1, &source, NULL));
     GL_CHECK(glCompileShader(shader_id));
     
-    ShaderId shader = { shader_id };
-    check_shader_error(shader);
-    return shader;
+    check_shader_error(shader_id);
+    return shader_id;
 }
 
 void init_render_target(Renderer* renderer)
@@ -127,12 +134,16 @@ void set_gl_state_post_render()
 
 void init_quad(Renderer* renderer)
 {
-
+    // todo()
+    // vertex buffer
+    // index buffer
+    // => render by using this quad data
 }
 
 void destroy_quad(Renderer* renderer)
 {
-    
+    // todo()
+    // destroy vb and ib
 }
 
 /********************************************************
