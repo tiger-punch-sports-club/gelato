@@ -57,6 +57,22 @@ int main(void)
 	unsigned char* data = stbi_load_from_file(file, &image_width, &image_height, &image_channels, 0);
 	fclose(file);
 
+	/* Invert Texture on Y Axis */
+	
+	for (int j = 0; j * 2 < image_height; ++j)
+	{
+		int index1 = j * image_width * image_channels;
+		int index2 = (image_height - 1 - j) * image_width * image_channels;
+		for (int i = image_width * image_channels; i > 0; --i)
+		{
+			unsigned char temp = data[index1];
+			data[index1] = data[index2];
+			data[index2] = temp;
+			++index1;
+			++index2;
+		}
+	}
+
 	// create texture
 	TextureId texture = create_texture((TextureDescription) {
 		    ._width = (uint32)image_width,
@@ -72,6 +88,8 @@ int main(void)
 	
 	// create sprite
 	Sprite sprite = create_sprite(texture);
+
+	stbi_image_free(data);
 
 	while (!glfwWindowShouldClose(window))
 	{

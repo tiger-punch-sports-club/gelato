@@ -18,13 +18,15 @@ const struct
     ._vertices =
     {
         -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        -1.0f, 1.0f, 0.0f,
-
         0.0f, 0.0f,
-        1.0f, 0.0f,
+
+        1.0f, -1.0f, 0.0f,
+         1.0f, 0.0f,
+
+        1.0f, 1.0f, 0.0f,
         1.0f, 1.0f,
+
+        -1.0f, 1.0f, 0.0f,
         0.0f, 1.0f
     },
 
@@ -80,7 +82,7 @@ void init_shaders(Renderer* renderer)
 {
     ShaderId shader_program = { glCreateProgram() };
     uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\n}\n");
-    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture(SpriteTexture, outVertexUV);\n}\n");
+    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(SpriteTexture, outVertexUV);\n}\n");
 
     GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
     GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
@@ -158,6 +160,8 @@ void set_gl_state_pre_render(Renderer* renderer)
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glCullFace(GL_BACK));
+    GL_CHECK(glFrontFace(GL_CCW));
 
     GL_CHECK(glViewport(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glScissor(0, 0, renderer->_window_width, renderer->_window_height));
@@ -203,24 +207,19 @@ void destroy_quad(Renderer* renderer)
 
 void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform)
 {
-    // glDrawElements();
+    float model_matrix[16];
+    make_identity_matrix(&model_matrix[0]); //todo: extract matrix from sprite.transform
+    make_scale_matrix(1.0f, 1.0f, 1.0f, &model_matrix[0]);
 
-    // auto texture = sprite->texture();
+    GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._model_matrix_location, 1, GL_FALSE, &model_matrix[0]));
+    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &transform->_uv_scale[0]));
+    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_offset_location, 1, &transform->_uv_offset[0]));
+    	
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, sprite->_texture._id));
+    GL_CHECK(glUniform1i(renderer->_sprite_shader._sprite_texture_location, 0));
 
-	// 	Mat4 model_matrix = sprite->parent()->transform().transformation();
-	// 	Mat4 model_view_matrix = view_matrix * model_matrix;
-	// 	Mat4 model_view_projection_matrix = projection_matrix * view_matrix * model_matrix;
-	
-	// 	shader->set_mat4(MODEL_VIEW_PROJECTION_MATRIX, model_view_projection_matrix);
-	// 	shader->set_mat4(MODEL_VIEW_MATRIX, model_view_matrix);
-	// 	shader->set_mat4(MODEL_MATRIX, model_matrix);
-
-	// 	shader->set_vec2(UV_SCALE, sprite->uv_scale());
-	// 	shader->set_vec2(UV_OFFSET, sprite->uv_offset());
-
-	// 	shader->set_texture2d(SPRITE_TEXTURE, texture.get(), GL_TEXTURE0);
-
-	// 	glDrawElements(GL_TRIANGLES, _quad_mesh->_index_count, _quad_mesh->_gl_index_type, nullptr);
+    GL_CHECK(glDrawElements(GL_TRIANGLES, QUAD_DATA._index_count, GL_UNSIGNED_INT, NULL));
 }
 
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type)
@@ -309,8 +308,8 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *new_width = (uint32) width;
     *new_height = (uint32) height;
 
-    *pixel_scale_x = win_width / virtual_width;     // win_width / virtual_width;
-    *pixel_scale_y = win_height / virtual_height;   // win_height / virtual_height;
+    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width;
+    *pixel_scale_y = height / virtual_height;   // win_height / virtual_height;
 }
 
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
@@ -325,13 +324,17 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
-    GL_CHECK(glUseProgram(renderer->_sprite_shader._shader._id));
-    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
-    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
-
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD._index_buffer));
+
+    GL_CHECK(glUseProgram(renderer->_sprite_shader._shader._id));
+    
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._vertex_attribute_location, 3, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, NULL));
+
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (3 * sizeof(float))));
 
     float pixel_scale_matrix[16];
     make_identity_matrix(&pixel_scale_matrix[0]);
@@ -346,7 +349,6 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
     mul_matrix(&view_matrix[0], &pixel_scale_matrix[0], &scaled_view_matrix[0]);
 
     float view_projection_matrix[16];
-    make_identity_matrix(&view_projection_matrix[0]);
     mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
 
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
