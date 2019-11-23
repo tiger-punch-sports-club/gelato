@@ -48,7 +48,7 @@ struct {
 } QUAD;
 
 void check_shader_error(uint32 shader);
-uint32 compile_shader(uint32 shader_type, const char* source);
+uint32 compile_shader(GLenum shader_type, const char* source);
 void init_shaders(Renderer* renderer);
 void destroy_shader(ShaderId* shader);
 void destroy_shaders(Renderer* renderer);
@@ -59,7 +59,7 @@ void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
 void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform);
-void init_projection_matrix(float* column_major_matrix);
+void init_projection_matrix(float* column_major_matrix); // move this to utils.c
 
 void check_shader_error(uint32 shader)
 {
@@ -122,7 +122,7 @@ void destroy_shaders(Renderer* renderer)
     destroy_shader(&renderer->_to_screen_shader._shader);
 }
 
-uint32 compile_shader(uint32 shader_type, const char* source)
+uint32 compile_shader(GLenum shader_type, const char* source)
 {
     uint32 shader_id = GL_CHECK(glCreateShader(shader_type));
 
