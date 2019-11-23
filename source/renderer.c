@@ -172,7 +172,7 @@ void set_gl_state_pre_render(Renderer* renderer)
     GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
     GL_CHECK(glViewport(x, y, renderer->_render_width, renderer->_render_height));
     GL_CHECK(glScissor(x, y, renderer->_render_width, renderer->_render_height));
-    GL_CHECK(glClearColor(1.0f, 1.0f, 1.0f, 1.0f));
+    GL_CHECK(glClearColor(0.7f, 0.7f, 0.7f, 1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
@@ -263,6 +263,11 @@ void initialize_renderer(Renderer* renderer)
     init_quad(renderer);
 
     make_projection_matrix(&renderer->_projection_matrix[0]);
+    // todo: make projection onto real window size
+    // todo: then we need to use pixel_scale matrix!
+    // if not, then not!!
+    // layer.getCamera().setProjectionMatrix(new Mat4().initOrthographic(0, windowWidth, 0, windowHeight, -10, 10));
+    // use pixel_scale
 
     renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
 }
@@ -308,8 +313,8 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *new_width = (uint32) width;
     *new_height = (uint32) height;
 
-    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width;
-    *pixel_scale_y = height / virtual_height;   // win_height / virtual_height;
+    *pixel_scale_x = win_width / virtual_width;     // win_width / virtual_width;
+    *pixel_scale_y = win_height / virtual_height;   // win_height / virtual_height;
 }
 
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
@@ -338,7 +343,8 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 
     float pixel_scale_matrix[16];
     make_identity_matrix(&pixel_scale_matrix[0]);
-    make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
+    // todo: use this only, if we use make_ortho with window_width and window_height as left, right, top, bottom boundries!
+    // make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
 
     float view_matrix[16];
     make_identity_matrix(&view_matrix[0]);
