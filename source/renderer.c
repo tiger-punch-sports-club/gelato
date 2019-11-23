@@ -3,6 +3,49 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
+const struct
+{
+    float _vertices[16];
+    uint32 _indices[6];
+    uint32 _vertex_stride;
+    uint32 _vertex_stride_bytes;
+    uint32 _face_count;
+    uint32 _vertex_count;
+    uint32 _index_count;
+} QUAD_DATA =
+{
+    ._vertices =
+    {
+        -1.0f, -1.0f,
+        1.0f, -1.0f,
+        1.0f, 1.0f,
+        -1.0f, 1.0f,
+
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f
+    },
+
+    ._indices =
+    {
+        0, 1, 2,
+        2, 3, 0
+    },
+
+    ._vertex_stride = 4,
+    ._vertex_stride_bytes = 4 * sizeof(float),
+    ._face_count = 2,
+    ._vertex_count = 4,
+    ._index_count = 6
+};
+
+struct {
+    uint32 _vertex_array;
+    uint32 _vertex_buffer;
+    uint32 _index_buffer;
+} QUAD;
+
 void check_shader_error(uint32 shader);
 uint32 compile_shader(uint32 shader_type, const char* source);
 void init_shaders(Renderer* renderer);
@@ -13,6 +56,7 @@ void set_gl_state_pre_render(Renderer* renderer);
 void set_gl_state_post_render();
 void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
+uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
 
 void check_shader_error(uint32 shader)
 {
@@ -26,7 +70,7 @@ void check_shader_error(uint32 shader)
     {
         printf("Shader error log for: %d\n%s\n", shader, error);
     }
-    
+
     assert(success != 0);
 }
 
@@ -48,7 +92,7 @@ void init_shaders(Renderer* renderer)
     GL_CHECK(glUseProgram(0));
 
     renderer->_sprite_shader = (SimpleSpriteShader)
-    { 
+    {
         ._shader = shader_program,
         ._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
         ._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
@@ -79,7 +123,7 @@ uint32 compile_shader(uint32 shader_type, const char* source)
 
     GL_CHECK(glShaderSource(shader_id, 1, &source, NULL));
     GL_CHECK(glCompileShader(shader_id));
-    
+
     check_shader_error(shader_id);
     return shader_id;
 }
@@ -87,7 +131,7 @@ uint32 compile_shader(uint32 shader_type, const char* source)
 void init_render_target(Renderer* renderer)
 {
     TextureDescription texture_desc =
-    { 
+    {
         ._width = renderer->_render_width,
         ._height = renderer->_render_height,
         ._format = TextureFormats._rgba,
@@ -106,16 +150,16 @@ void set_gl_state_pre_render(Renderer* renderer)
 {
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glEnable(GL_CULL_FACE));
+    GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
-    GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     GL_CHECK(glViewport(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glScissor(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-	
+
     GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
     GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
     GL_CHECK(glViewport(x, y, renderer->_render_width, renderer->_render_height));
@@ -134,16 +178,35 @@ void set_gl_state_post_render()
 
 void init_quad(Renderer* renderer)
 {
-    // todo()
-    // vertex buffer
-    // index buffer
-    // => render by using this quad data
+    GL_CHECK(glGenVertexArrays(1, &QUAD._vertex_array));
+    GL_CHECK(glBindVertexArray(QUAD._vertex_array));
+    
+    uint32* vertices = (uint32*) (&QUAD_DATA._vertices);
+    QUAD._vertex_buffer = create_buffer(vertices, QUAD_DATA._vertex_stride_bytes, QUAD_DATA._vertex_count, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+
+    uint32* indices = (uint32*) (&QUAD_DATA._indices);
+    QUAD._index_buffer = create_buffer(indices, sizeof(uint32), QUAD_DATA._index_count, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+    
+    GL_CHECK(glBindVertexArray(0));
 }
 
 void destroy_quad(Renderer* renderer)
 {
-    // todo()
-    // destroy vb and ib
+    GL_CHECK(glDeleteVertexArrays(1, &QUAD._vertex_array));
+    GL_CHECK(glDeleteBuffers(1, &QUAD._vertex_buffer));
+    GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
+}
+
+uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type)
+{
+    uint32 handle;
+
+    GL_CHECK(glGenBuffers(1, &handle));
+    GL_CHECK(glBindBuffer(buffer_type, handle));
+    GL_CHECK(glBufferData(buffer_type, stride_in_bytes * amount, data, buffer_type_usage_type));
+    GL_CHECK(glBindBuffer(buffer_type, 0));
+
+    return handle;
 }
 
 /********************************************************
@@ -187,16 +250,16 @@ void max_resolution_aspect_ratio(float target_resolution_width, float target_res
     uint32 current_height = (uint32) current_resolution_height;
 
     float target_aspect_ratio = target_resolution_width / target_resolution_height;
-    
+
     uint32 width = (uint32) current_resolution_width;
     uint32 height = (uint32)(width / target_aspect_ratio + 0.5f);
-    
+
     if (height > current_height)
     {
         height = current_height;
         width = (uint32)(height * target_aspect_ratio + 0.5f);
     }
-    
+
     *new_width = (float) width;
     *new_height = (float) height;
 }
@@ -216,7 +279,7 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *new_width = (uint32) width;
     *new_height = (uint32) height;
 
-    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width; 
+    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width;
     *pixel_scale_y = height / virtual_height;   // win_height / virtual_height;
 }
 
@@ -231,7 +294,7 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
-    
+
     // todo:
     // 	--> copy quad data 
 	//	--> send data to gpu
@@ -246,7 +309,7 @@ Sprite create_sprite(TextureId texture)
     {
         ._texture = texture,
         ._transform =
-        { 
+        {
             ._position[0] = 0.0f,
             ._position[1] = 0.0f,
             ._position[2] = 0.0f,
@@ -266,3 +329,4 @@ Sprite create_sprite(TextureId texture)
 
     return sprite;
 }
+
