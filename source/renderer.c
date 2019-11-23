@@ -1,11 +1,12 @@
 #include "renderer.h"
+#include "sprite.h"
 #include <assert.h>
 #include <stdio.h>
 #include <GL/glew.h>
 
 const struct
 {
-    float _vertices[16];
+    float _vertices[20];
     uint32 _indices[6];
     uint32 _vertex_stride;
     uint32 _vertex_stride_bytes;
@@ -16,10 +17,10 @@ const struct
 {
     ._vertices =
     {
-        -1.0f, -1.0f,
-        1.0f, -1.0f,
-        1.0f, 1.0f,
-        -1.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f,
 
         0.0f, 0.0f,
         1.0f, 0.0f,
@@ -33,8 +34,8 @@ const struct
         2, 3, 0
     },
 
-    ._vertex_stride = 4,
-    ._vertex_stride_bytes = 4 * sizeof(float),
+    ._vertex_stride = 5,
+    ._vertex_stride_bytes = 5 * sizeof(float),
     ._face_count = 2,
     ._vertex_count = 4,
     ._index_count = 6
@@ -57,6 +58,8 @@ void set_gl_state_post_render();
 void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
+void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform);
+void init_projection_matrix(float* column_major_matrix);
 
 void check_shader_error(uint32 shader)
 {
@@ -94,6 +97,8 @@ void init_shaders(Renderer* renderer)
     renderer->_sprite_shader = (SimpleSpriteShader)
     {
         ._shader = shader_program,
+        ._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
+        ._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
         ._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
         ._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
         ._uv_offset_location = glGetUniformLocation(shader_program._id, "UvOffset"),
@@ -197,6 +202,28 @@ void destroy_quad(Renderer* renderer)
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
 }
 
+void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform)
+{
+    // glDrawElements();
+
+    // auto texture = sprite->texture();
+
+	// 	Mat4 model_matrix = sprite->parent()->transform().transformation();
+	// 	Mat4 model_view_matrix = view_matrix * model_matrix;
+	// 	Mat4 model_view_projection_matrix = projection_matrix * view_matrix * model_matrix;
+	
+	// 	shader->set_mat4(MODEL_VIEW_PROJECTION_MATRIX, model_view_projection_matrix);
+	// 	shader->set_mat4(MODEL_VIEW_MATRIX, model_view_matrix);
+	// 	shader->set_mat4(MODEL_MATRIX, model_matrix);
+
+	// 	shader->set_vec2(UV_SCALE, sprite->uv_scale());
+	// 	shader->set_vec2(UV_OFFSET, sprite->uv_offset());
+
+	// 	shader->set_texture2d(SPRITE_TEXTURE, texture.get(), GL_TEXTURE0);
+
+	// 	glDrawElements(GL_TRIANGLES, _quad_mesh->_index_count, _quad_mesh->_gl_index_type, nullptr);
+}
+
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type)
 {
     uint32 handle;
@@ -207,6 +234,47 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum b
     GL_CHECK(glBindBuffer(buffer_type, 0));
 
     return handle;
+}
+
+void init_projection_matrix(float* column_major_matrix)
+{
+    float left = -1.0f;
+    float right = 1.0f;
+    float top = 1.0f;
+    float bottom = -1.0f;
+    float near_plane = -1.0f;
+    float far_plane = 1.0f;
+
+    column_major_matrix[0] = 1.0f;
+    column_major_matrix[1] = 0.0f;
+    column_major_matrix[2] = 0.0f;
+    column_major_matrix[3] = 0.0f;
+
+    column_major_matrix[4] = 0.0f;
+    column_major_matrix[5] = 1.0f;
+    column_major_matrix[6] = 0.0f;
+    column_major_matrix[7] = 0.0f;
+
+    column_major_matrix[8] = 0.0f;
+    column_major_matrix[9] = 0.0f;
+    column_major_matrix[10] = 1.0f;
+    column_major_matrix[11] = 0.0f;
+
+    column_major_matrix[12] = 0.0f;
+    column_major_matrix[13] = 0.0f;
+    column_major_matrix[14] = 0.0f;
+    column_major_matrix[15] = 1.0f;
+
+	float delta_x = right - left;
+	float delta_y = top - bottom;
+	float delta_z = far_plane - near_plane;
+
+	column_major_matrix[0] = 2.0f / delta_x;
+    column_major_matrix[12] = -(right + left) / delta_x;
+	column_major_matrix[5] = 2.0f / delta_y;
+    column_major_matrix[13] = -(top + bottom) / delta_y;
+	column_major_matrix[10] = -2.0f / delta_z;
+    column_major_matrix[14] = -(far_plane + near_plane) / delta_z;
 }
 
 /********************************************************
@@ -236,6 +304,8 @@ void initialize_renderer(Renderer* renderer)
     init_shaders(renderer);
     init_render_target(renderer);
     init_quad(renderer);
+
+    init_projection_matrix(&renderer->_projection_matrix[0]);
 }
 
 void deinitialize_renderer(Renderer* renderer)
@@ -279,8 +349,8 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *new_width = (uint32) width;
     *new_height = (uint32) height;
 
-    *pixel_scale_x = width / virtual_width;     // win_width / virtual_width;
-    *pixel_scale_y = height / virtual_height;   // win_height / virtual_height;
+    *pixel_scale_x = win_width / virtual_width;     // win_width / virtual_width;
+    *pixel_scale_y = win_height / virtual_height;   // win_height / virtual_height;
 }
 
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
@@ -295,38 +365,46 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
-    // todo:
-    // 	--> copy quad data 
-	//	--> send data to gpu
-	// render sprite
+    GL_CHECK(glUseProgram(renderer->_sprite_shader._shader._id));
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+
+    GL_CHECK(glBindVertexArray(QUAD._vertex_array));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD._index_buffer));
+
+    float pixel_scale_matrix[16];
+    make_identity_matrix(&pixel_scale_matrix[0]);
+    make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
+
+    float view_matrix[16];
+    make_identity_matrix(&view_matrix[0]);
+    // view_matrix = camera.matrix;
+
+    float scaled_view_matrix[16];
+    make_identity_matrix(&scaled_view_matrix[0]);
+    mul_matrix(&view_matrix[0], &pixel_scale_matrix[0], &scaled_view_matrix[0]);
+
+    float view_projection_matrix[16];
+    make_identity_matrix(&view_projection_matrix[0]);
+    mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
+
+    GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
+
+    for(uint64 i = 0; i < sprites_count; ++i)
+    {
+        Sprite* sprite = &sprites[i];
+        Transform* transform = &sprite->_transform;
+        render_quad(renderer, sprite, transform);
+    }
+
+    GL_CHECK(glBindVertexArray(0));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+    GL_CHECK(glUseProgram(0));
 
     set_gl_state_post_render();
 }
-
-Sprite create_sprite(TextureId texture)
-{
-    Sprite sprite =
-    {
-        ._texture = texture,
-        ._transform =
-        {
-            ._position[0] = 0.0f,
-            ._position[1] = 0.0f,
-            ._position[2] = 0.0f,
-
-            ._scale[0] = 1.0f,
-            ._scale[1] = 1.0f,
-
-            ._rotation = 0.0f,
-
-            ._uv_scale[0] = 1.0f,
-            ._uv_scale[1] = 1.0f,
-
-            ._uv_offset[0] = 0.0f,
-            ._uv_offset[1] = 0.0f,
-        }
-    };
-
-    return sprite;
-}
-

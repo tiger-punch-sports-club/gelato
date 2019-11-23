@@ -9,6 +9,7 @@
 extern "C" 
 {
 	#include <renderer.h>
+	#include <sprite.h>
 }
 
 Renderer* g_renderer;

@@ -1,26 +1,12 @@
 #pragma once
 #include "platform.h"
 #include "texture.h"
-
-typedef struct Transform
-{
-    float _position[3];
-    float _scale[2];
-    float _rotation;
-    float _uv_scale[2];
-    float _uv_offset[2];
-} Transform;
+#include "sprite.h"
 
 typedef struct ShaderId
 {
     uint32 _id;
 } ShaderId;
-
-typedef struct Sprite
-{
-    TextureId _texture;
-    Transform _transform;
-} Sprite;
 
 typedef struct RendererDescription
 {
@@ -34,6 +20,8 @@ typedef struct RendererDescription
 typedef struct SimpleSpriteShader
 {
     ShaderId _shader;
+    int32 _vertex_attribute_location;
+    int32 _uv_attribute_location;
     int32 _model_matrix_location;
     int32 _view_projection_matrix_location;
     int32 _uv_offset_location;
@@ -61,6 +49,8 @@ typedef struct Renderer
     ToScreenShader _to_screen_shader;
 
     TextureId _render_target;
+
+    float _projection_matrix[16];
 } Renderer;
 
 Renderer create_renderer(RendererDescription renderer_description);
@@ -68,5 +58,3 @@ void initialize_renderer(Renderer* renderer);
 void deinitialize_renderer(Renderer* renderer);
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height);
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count);
-
-Sprite create_sprite(TextureId texture);
