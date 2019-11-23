@@ -59,7 +59,6 @@ void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
 void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform);
-void init_projection_matrix(float* column_major_matrix); // move this to utils.c
 
 void check_shader_error(uint32 shader)
 {
@@ -236,47 +235,6 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum b
     return handle;
 }
 
-void init_projection_matrix(float* column_major_matrix)
-{
-    float left = -1.0f;
-    float right = 1.0f;
-    float top = 1.0f;
-    float bottom = -1.0f;
-    float near_plane = -1.0f;
-    float far_plane = 1.0f;
-
-    column_major_matrix[0] = 1.0f;
-    column_major_matrix[1] = 0.0f;
-    column_major_matrix[2] = 0.0f;
-    column_major_matrix[3] = 0.0f;
-
-    column_major_matrix[4] = 0.0f;
-    column_major_matrix[5] = 1.0f;
-    column_major_matrix[6] = 0.0f;
-    column_major_matrix[7] = 0.0f;
-
-    column_major_matrix[8] = 0.0f;
-    column_major_matrix[9] = 0.0f;
-    column_major_matrix[10] = 1.0f;
-    column_major_matrix[11] = 0.0f;
-
-    column_major_matrix[12] = 0.0f;
-    column_major_matrix[13] = 0.0f;
-    column_major_matrix[14] = 0.0f;
-    column_major_matrix[15] = 1.0f;
-
-	float delta_x = right - left;
-	float delta_y = top - bottom;
-	float delta_z = far_plane - near_plane;
-
-	column_major_matrix[0] = 2.0f / delta_x;
-    column_major_matrix[12] = -(right + left) / delta_x;
-	column_major_matrix[5] = 2.0f / delta_y;
-    column_major_matrix[13] = -(top + bottom) / delta_y;
-	column_major_matrix[10] = -2.0f / delta_z;
-    column_major_matrix[14] = -(far_plane + near_plane) / delta_z;
-}
-
 /********************************************************
 ********************* PUBLIC API ************************
 ********************************************************/
@@ -305,7 +263,9 @@ void initialize_renderer(Renderer* renderer)
     init_render_target(renderer);
     init_quad(renderer);
 
-    init_projection_matrix(&renderer->_projection_matrix[0]);
+    make_projection_matrix(&renderer->_projection_matrix[0]);
+
+    renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
 }
 
 void deinitialize_renderer(Renderer* renderer)
