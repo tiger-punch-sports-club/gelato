@@ -43,7 +43,7 @@ SET (GLFW_SOURCE_DIR "vendor/glfw-3.3")
 # glfw 3.3
 add_subdirectory(${GLFW_SOURCE_DIR})
 
-# darnkess99-sandbox cpp application
+# gelato89-sandbox cpp application
 add_executable(
                 gelato89-sandbox 
                 ${PROJECT_SOURCE_DIR}/sandbox.cpp
