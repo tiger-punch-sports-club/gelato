@@ -103,3 +103,11 @@ void make_transformation(Transform* transform, float* dest)
 
     mul_matrix(&tr_matrix[0], &scale_matrix[0], dest);
 }
+
+void make_camera_transformation(Transform* transform, float* dest)
+{
+    // Transform
+    make_identity_matrix(dest);
+
+    // transpose that shit ! :brooooooofff
+}

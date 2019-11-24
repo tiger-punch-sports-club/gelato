@@ -332,7 +332,7 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
     make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
-void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
+void render(Renderer* renderer, Transform* camera_transform, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
@@ -353,8 +353,7 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
     make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
 
     float view_matrix[16];
-    make_identity_matrix(&view_matrix[0]);
-    // todo: view_matrix = camera.matrix;
+    make_camera_transformation(camera_transform, &view_matrix[0]);
 
     float scaled_view_matrix[16];
     make_identity_matrix(&scaled_view_matrix[0]);

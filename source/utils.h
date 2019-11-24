@@ -14,3 +14,4 @@ void make_rotation_matrix(float angle_in_degrees, float* dest);
 void make_identity_matrix(float* dest);
 void make_projection_matrix(float left, float right, float bottom, float top, float near_plane, float far_plane, float* dest);
 void make_transformation(Transform* transform, float* dest);
+void make_camera_transformation(Transform* transform, float* dest);

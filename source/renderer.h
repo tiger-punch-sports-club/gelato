@@ -60,4 +60,4 @@ Renderer create_renderer(RendererDescription renderer_description);
 void initialize_renderer(Renderer* renderer);
 void deinitialize_renderer(Renderer* renderer);
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height);
-void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count);
+void render(Renderer* renderer, Transform* camera_transform, Sprite* sprites, uint64 sprites_count);

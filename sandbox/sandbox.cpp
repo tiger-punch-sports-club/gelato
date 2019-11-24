@@ -102,6 +102,10 @@ int main(void)
 	sprite._transform._position[0] = 320.0f;
 	sprite._transform._position[1] = 240.0f;
 
+	Transform camera_transform = {};
+	camera_transform._scale[0] = 1.0f;
+	camera_transform._scale[1] = 1.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		float angle_speed = 80.0f;
@@ -111,7 +115,7 @@ int main(void)
 			sprite._transform._rotation = 0;
 		}
 
-		render(&renderer, &sprite, 1);
+		render(&renderer, &camera_transform, &sprite, 1);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
