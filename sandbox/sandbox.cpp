@@ -36,7 +36,7 @@ int main(void)
 		glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	}
 
-	GLFWwindow *window = glfwCreateWindow(640, 480, "Gelato32 - Sandbox", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(640, 480, "Gelato89 - Sandbox", NULL, NULL);
   	glfwMakeContextCurrent(window);
 
 	RendererDescription description = { 0 };
@@ -106,7 +106,7 @@ int main(void)
 	camera_transform._scale[0] = 1.0f;
 	camera_transform._scale[1] = 1.0f;
 
-	camera_transform._position[0] = -320.0f;
+	camera_transform._position[0] = 0.0f;
 
 	while (!glfwWindowShouldClose(window))
 	{

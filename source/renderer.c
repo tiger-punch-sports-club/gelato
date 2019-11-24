@@ -261,13 +261,18 @@ Renderer create_renderer(RendererDescription renderer_description)
 void initialize_renderer(Renderer* renderer)
 {
     glewExperimental = GL_TRUE;
-    assert(glewInit() == GLEW_OK);
 
-    init_shaders(renderer);
-    init_render_target(renderer);
-    init_quad(renderer);
-
-    renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
+    if(glewInit() == GLEW_OK)
+    {
+        init_shaders(renderer);
+        init_render_target(renderer);
+        init_quad(renderer);
+        renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
+    }
+    else
+    {
+        assert(0);
+    }
 }
 
 void deinitialize_renderer(Renderer* renderer)

@@ -18,13 +18,14 @@ void check_gl_error(const char* file_name, int line_number);
 
 #define GELATO_HASH_SEED 0xCAFEBABE
 #define GELATO_CONTENT_PACKAGE_MAGIC 0xCAFEBABE
+#define __DEBUG__
 
-#if __DEBUG__
-    #define GL_CHECK(function) function
-#else
+#ifdef __DEBUG__
     #define GL_CHECK(function)\
     function;\
     check_gl_error(__FILE__, __LINE__);
+#else
+    #define GL_CHECK(function) function
 #endif
 
 #define ARRAY_SIZE(array) \
