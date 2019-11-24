@@ -18,9 +18,9 @@ void check_gl_error(const char* file_name, int line_number);
 
 #define GELATO_HASH_SEED 0xCAFEBABE
 #define GELATO_CONTENT_PACKAGE_MAGIC 0xCAFEBABE
-#define __DEBUG__
+#define GELATO_DEBUG
 
-#ifdef __DEBUG__
+#ifdef GELATO_DEBUG
     #define GL_CHECK(function)\
     function;\
     check_gl_error(__FILE__, __LINE__);

@@ -35,18 +35,6 @@ add_library(
 )
 target_link_libraries(gelato89 PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE xxhash PRIVATE glew)
 
-# project content package tool
-project(gelato89-cpt CXX)
-SET (CPT_DIR "${PROJECT_SOURCE_DIR}/tools/content_package_tool")
-
-add_executable(
-    gelato89-cpt 
-    ${CPT_DIR}/cpt.cpp
-    ${CPT_DIR}/glob.c
-)
-
-target_link_libraries(gelato89-cpt PRIVATE gelato89)
-
 # project sandbox
 project(gelato89-sandbox CXX)
 SET (PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/sandbox")
