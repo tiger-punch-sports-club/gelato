@@ -6,6 +6,8 @@ typedef struct Sprite
 {
     TextureId _texture;
     Transform _transform;
+    float _uv_scale[2];
+    float _uv_offset[2];
 } Sprite;
 
 Sprite create_sprite(TextureId texture);

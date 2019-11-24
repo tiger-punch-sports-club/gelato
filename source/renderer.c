@@ -211,8 +211,8 @@ void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform)
     make_transformation(transform, &model_matrix[0]);
 
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._model_matrix_location, 1, GL_FALSE, &model_matrix[0]));
-    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &transform->_uv_scale[0]));
-    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_offset_location, 1, &transform->_uv_offset[0]));
+    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &sprite->_uv_scale[0]));
+    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_offset_location, 1, &sprite->_uv_offset[0]));
     	
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, sprite->_texture._id));
