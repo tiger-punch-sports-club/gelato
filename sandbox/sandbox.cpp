@@ -44,6 +44,9 @@ int main(void)
 	description._window_height = 480;
 	description._render_width = 640;
 	description._render_height = 480;
+	description._clear_color_render_target[0] = 0.4f;
+	description._clear_color_render_target[1] = 0.4f;
+	description._clear_color_render_target[2] = 0.7f;
 
 	Renderer renderer = create_renderer(description);
 	initialize_renderer(&renderer);
@@ -57,8 +60,7 @@ int main(void)
 	unsigned char* data = stbi_load_from_file(file, &image_width, &image_height, &image_channels, 0);
 	fclose(file);
 
-	/* Invert Texture on Y Axis */
-	
+	/* invert texture on y axis */
 	for (int j = 0; j * 2 < image_height; ++j)
 	{
 		int index1 = j * image_width * image_channels;
@@ -74,7 +76,9 @@ int main(void)
 	}
 
 	// create texture
-	TextureId texture = create_texture((TextureDescription) {
+	TextureId texture = create_texture(
+		(TextureDescription) 
+		{
 		    ._width = (uint32)image_width,
 		    ._height = (uint32)image_height,
 		    ._format = TextureFormats._rgba,
@@ -84,7 +88,9 @@ int main(void)
 			._wrap_t = TextureWraps._clamp_to_edge,
 			._min_filter = TextureMinFilters._nearest,
     		._mag_filter = TextureMagFilters._nearest
-	}, (void*) data);
+		}, 
+		(void*) data
+	);
 	
 	// create sprite
 	Sprite sprite = create_sprite(texture);
@@ -93,8 +99,18 @@ int main(void)
 	sprite._transform._scale[0] = 64.0f;
 	sprite._transform._scale[1] = 64.0f;
 
+	sprite._transform._position[0] = 320.0f;
+	sprite._transform._position[1] = 240.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
+		float angle_speed = 80.0f;
+		sprite._transform._rotation += 0.016f * angle_speed;
+		if(sprite._transform._rotation >= 360)
+		{
+			sprite._transform._rotation = 0;
+		}
+
 		render(&renderer, &sprite, 1);
 		glfwPollEvents();
 		glfwSwapBuffers(window);

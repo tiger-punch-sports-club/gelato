@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <string.h> 
+#include <math.h> 
 
 /*  matrix: column-major, right-hand-side  */
 /* 00 => 0 | 10 => 4 | 20 => 8  | 30 => 12 */ 
@@ -7,6 +8,7 @@
 /* 02 => 2 | 12 => 6 | 22 => 10 | 32 => 14 */ 
 /* 03 => 3 | 13 => 7 | 23 => 11 | 33 => 15 */ 
 
+#define PI 3.14159265358979323846
 void mul_matrix(float* left, float* right, float* dest)
 {
     dest[0] = left[0] * right[0] + left[4] * right[1] + left[8] * right[2] + left[12] * right[3];
@@ -37,6 +39,26 @@ void make_scale_matrix(float x, float y, float z, float* dest)
 	dest[10] = z;
 }
 
+void make_translation_matrix(float x, float y, float z, float* dest)
+{
+    dest[12] = x;
+    dest[13] = y;
+    dest[14] = z;
+}
+
+void make_rotation_matrix(float angle_in_degrees, float* dest)
+{
+    float angle_radians = (angle_in_degrees / 180.0f) * PI;
+    float cos = cosf(angle_radians);
+    float sin = sinf(angle_radians);
+
+    dest[0] = cos; 
+    dest[1] = sin; 
+
+    dest[4] = -sin;
+    dest[5] = cos;
+}
+
 void make_identity_matrix(float* dest)
 {
     memset(dest, 0, sizeof(float) * 16);
@@ -62,5 +84,22 @@ void make_projection_matrix(float left, float right, float bottom, float top, fl
 void make_transformation(Transform* transform, float* dest)
 {
     make_identity_matrix(dest);
-    make_scale_matrix(transform->_scale[0], transform->_scale[1], 1.0f, dest);
+
+    float translation_matrix[16];
+    make_identity_matrix(&translation_matrix[0]);
+    make_translation_matrix(transform->_position[0], transform->_position[1], transform->_position[2], &translation_matrix[0]);
+
+    float scale_matrix[16];
+    make_identity_matrix(&scale_matrix[0]);
+    make_scale_matrix(transform->_scale[0], transform->_scale[1], 1.0f, &scale_matrix[0]);
+
+    float rotation_matrix[16];
+    make_identity_matrix(&rotation_matrix[0]);
+    make_rotation_matrix(transform->_rotation, &rotation_matrix[0]);
+
+    float tr_matrix[16];
+    make_identity_matrix(&tr_matrix[0]);
+    mul_matrix(&translation_matrix[0], &rotation_matrix[0], &tr_matrix[0]);
+
+    mul_matrix(&tr_matrix[0], &scale_matrix[0], dest);
 }

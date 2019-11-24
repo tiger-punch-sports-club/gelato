@@ -165,14 +165,14 @@ void set_gl_state_pre_render(Renderer* renderer)
 
     GL_CHECK(glViewport(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glScissor(0, 0, renderer->_window_width, renderer->_window_height));
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL_CHECK(glClearColor(renderer->_clear_color_letter_box[0], renderer->_clear_color_letter_box[1], renderer->_clear_color_letter_box[2], 1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
     GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
     GL_CHECK(glViewport(x, y, renderer->_render_width, renderer->_render_height));
     GL_CHECK(glScissor(x, y, renderer->_render_width, renderer->_render_height));
-    GL_CHECK(glClearColor(0.7f, 0.7f, 0.7f, 1.0f));
+    GL_CHECK(glClearColor(renderer->_clear_color_render_target[0], renderer->_clear_color_render_target[1], renderer->_clear_color_render_target[2], 1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
@@ -246,7 +246,13 @@ Renderer create_renderer(RendererDescription renderer_description)
         ._render_width = renderer_description._render_width,
         ._render_height = renderer_description._render_height,
         ._virtual_target_width = renderer_description._render_width,
-        ._virtual_target_height = renderer_description._render_height
+        ._virtual_target_height = renderer_description._render_height,
+        ._clear_color_letter_box[0] = renderer_description._clear_color_letter_box[0],
+        ._clear_color_letter_box[1] = renderer_description._clear_color_letter_box[1],
+        ._clear_color_letter_box[2] = renderer_description._clear_color_letter_box[2],
+        ._clear_color_render_target[0] = renderer_description._clear_color_render_target[0],
+        ._clear_color_render_target[1] = renderer_description._clear_color_render_target[1],
+        ._clear_color_render_target[2] = renderer_description._clear_color_render_target[2],
     };
 
     return renderer;

@@ -12,9 +12,10 @@ typedef struct RendererDescription
 {
     uint32 _render_width;
     uint32 _render_height;
-
     uint32 _window_width;
     uint32 _window_height;
+    float _clear_color_letter_box[3];
+    float _clear_color_render_target[3];
 } RendererDescription;
 
 typedef struct SimpleSpriteShader
@@ -51,6 +52,8 @@ typedef struct Renderer
     TextureId _render_target;
 
     float _projection_matrix[16];
+    float _clear_color_letter_box[3];
+    float _clear_color_render_target[3];
 } Renderer;
 
 Renderer create_renderer(RendererDescription renderer_description);
