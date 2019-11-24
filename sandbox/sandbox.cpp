@@ -106,13 +106,15 @@ int main(void)
 	camera_transform._scale[0] = 1.0f;
 	camera_transform._scale[1] = 1.0f;
 
+	camera_transform._position[0] = -320.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		float angle_speed = 80.0f;
-		sprite._transform._rotation += 0.016f * angle_speed;
-		if(sprite._transform._rotation >= 360)
+		sprite._transform._angle_degrees += 0.016f * angle_speed;
+		if(sprite._transform._angle_degrees >= 360)
 		{
-			sprite._transform._rotation = 0;
+			sprite._transform._angle_degrees = 0;
 		}
 
 		render(&renderer, &camera_transform, &sprite, 1);

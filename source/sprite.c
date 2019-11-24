@@ -14,7 +14,7 @@ Sprite create_sprite(TextureId texture)
             ._scale[0] = 1.0f,
             ._scale[1] = 1.0f,
 
-            ._rotation = 0.0f
+            ._angle_degrees = 0.0f
         },
         ._uv_scale[0] = 1.0f,
         ._uv_scale[1] = 1.0f,

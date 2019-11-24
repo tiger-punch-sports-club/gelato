@@ -357,7 +357,7 @@ void render(Renderer* renderer, Transform* camera_transform, Sprite* sprites, ui
 
     float scaled_view_matrix[16];
     make_identity_matrix(&scaled_view_matrix[0]);
-    mul_matrix(&view_matrix[0], &pixel_scale_matrix[0], &scaled_view_matrix[0]);
+    mul_matrix(&pixel_scale_matrix[0], &view_matrix[0], &scaled_view_matrix[0]);
 
     float view_projection_matrix[16];
     mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);

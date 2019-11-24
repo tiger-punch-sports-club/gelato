@@ -4,10 +4,11 @@ typedef struct Transform
 {
     float _position[3];
     float _scale[2];
-    float _rotation;
+    float _angle_degrees;
 } Transform;
 
 void mul_matrix(float* left, float* right, float* dest);
+void mul_vec_matrix(float* vec, float* matrix, float* dest);
 void make_scale_matrix(float x, float y, float z, float* dest);
 void make_translation_matrix(float x, float y, float z, float* dest);
 void make_rotation_matrix(float angle_in_degrees, float* dest);

@@ -32,6 +32,13 @@ void mul_matrix(float* left, float* right, float* dest)
     dest[15] = left[3] * right[12] + left[7] * right[13] + left[11] * right[14] + left[15] * right[15];
 }
 
+void mul_vec_matrix(float* vec, float* matrix, float* dest)
+{
+    dest[0] = matrix[0] * vec[0] + matrix[4] * vec[1] + matrix[8] * vec[2] + matrix[12];
+    dest[1] = matrix[1] * vec[0] + matrix[5] * vec[1] + matrix[9] * vec[2] + matrix[13];
+    dest[2] = matrix[2] * vec[0] + matrix[6] * vec[1] + matrix[10] * vec[2] + matrix[14];
+}
+
 void make_scale_matrix(float x, float y, float z, float* dest)
 {
     dest[0] = x;
@@ -95,7 +102,7 @@ void make_transformation(Transform* transform, float* dest)
 
     float rotation_matrix[16];
     make_identity_matrix(&rotation_matrix[0]);
-    make_rotation_matrix(transform->_rotation, &rotation_matrix[0]);
+    make_rotation_matrix(transform->_angle_degrees, &rotation_matrix[0]);
 
     float tr_matrix[16];
     make_identity_matrix(&tr_matrix[0]);
@@ -106,8 +113,23 @@ void make_transformation(Transform* transform, float* dest)
 
 void make_camera_transformation(Transform* transform, float* dest)
 {
-    // Transform
+    float transformation[16];
+    make_transformation(transform, &transformation[0]);
+
     make_identity_matrix(dest);
 
-    // transpose that shit ! :brooooooofff
+    dest[0] = transformation[0];
+    dest[1] = transformation[4];
+    dest[2] = transformation[8];
+    dest[4] = transformation[1];
+    dest[5] = transformation[5];
+    dest[6] = transformation[9];
+    dest[8] = transformation[2];
+    dest[9] = transformation[6];
+    dest[10] = transformation[10];
+    
+    float translation[3] = { 0 };
+    mul_vec_matrix(&transform->_position[0], dest, &translation[0]);
+
+    make_translation_matrix(-translation[0], -translation[1], -translation[2], dest);
 }
