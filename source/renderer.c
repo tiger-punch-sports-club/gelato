@@ -262,7 +262,14 @@ void initialize_renderer(Renderer* renderer)
     init_render_target(renderer);
     init_quad(renderer);
 
-    make_projection_matrix(&renderer->_projection_matrix[0]);
+    float left = -1.0f;
+    float right = 1.0f;
+    float top = 1.0f;
+    float bottom = -1.0f;
+    float near_plane = -1.0f;
+    float far_plane = 1.0f;
+
+    make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
     // todo: make projection onto real window size
     // todo: then we need to use pixel_scale matrix!
     // if not, then not!!

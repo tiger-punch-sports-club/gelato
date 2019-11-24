@@ -43,16 +43,9 @@ void make_identity_matrix(float* dest)
     dest[0] = dest[5] = dest[10] = dest[15] = 1.0f;
 }
 
-void make_projection_matrix(float* dest)
+void make_projection_matrix(float left, float right, float bottom, float top, float near_plane, float far_plane, float* dest)
 {
     make_identity_matrix(dest);
-
-    float left = -1.0f;
-    float right = 1.0f;
-    float top = 1.0f;
-    float bottom = -1.0f;
-    float near_plane = -1.0f;
-    float far_plane = 1.0f;
 
 	float delta_x = right - left;
 	float delta_y = top - bottom;
