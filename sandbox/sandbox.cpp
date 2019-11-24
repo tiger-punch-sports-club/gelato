@@ -102,7 +102,7 @@ int main(void)
 	sprite._transform._position[0] = 320.0f;
 	sprite._transform._position[1] = 240.0f;
 
-	Transform camera_transform = {};
+	GelatoTransform camera_transform = {};
 	camera_transform._scale[0] = 1.0f;
 	camera_transform._scale[1] = 1.0f;
 

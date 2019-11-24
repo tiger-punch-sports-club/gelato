@@ -60,7 +60,7 @@ void set_gl_state_post_render();
 void init_quad(Renderer* renderer);
 void destroy_quad(Renderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
-void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform);
+void render_quad(Renderer* renderer, Sprite* sprite, GelatoTransform* transform);
 
 void check_shader_error(uint32 shader)
 {
@@ -204,10 +204,10 @@ void destroy_quad(Renderer* renderer)
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
 }
 
-void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform)
+void render_quad(Renderer* renderer, Sprite* sprite, GelatoTransform* transform)
 {
     float model_matrix[16];
-    make_transformation(transform, &model_matrix[0]);
+    gelato_make_transformation(transform, &model_matrix[0]);
 
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._model_matrix_location, 1, GL_FALSE, &model_matrix[0]));
     GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &sprite->_uv_scale[0]));
@@ -333,10 +333,10 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
     float near_plane = -10.0f;
     float far_plane = 10.0f;
     
-    make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
+    gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
-void render(Renderer* renderer, Transform* camera_transform, Sprite* sprites, uint64 sprites_count)
+void render(Renderer* renderer, GelatoTransform* camera_transform, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
@@ -353,25 +353,25 @@ void render(Renderer* renderer, Transform* camera_transform, Sprite* sprites, ui
     GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (3 * sizeof(float))));
 
     float pixel_scale_matrix[16];
-    make_identity_matrix(&pixel_scale_matrix[0]);
-    make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
+    gelato_make_identity_matrix(&pixel_scale_matrix[0]);
+    gelato_make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
 
     float view_matrix[16];
-    make_camera_transformation(camera_transform, &view_matrix[0]);
+    gelato_make_camera_transformation(camera_transform, &view_matrix[0]);
 
     float scaled_view_matrix[16];
-    make_identity_matrix(&scaled_view_matrix[0]);
-    mul_matrix(&pixel_scale_matrix[0], &view_matrix[0], &scaled_view_matrix[0]);
+    gelato_make_identity_matrix(&scaled_view_matrix[0]);
+    gelato_mul_matrix(&pixel_scale_matrix[0], &view_matrix[0], &scaled_view_matrix[0]);
 
     float view_projection_matrix[16];
-    mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
+    gelato_mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
 
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
 
     for(uint64 i = 0; i < sprites_count; ++i)
     {
         Sprite* sprite = &sprites[i];
-        Transform* transform = &sprite->_transform;
+        GelatoTransform* transform = &sprite->_transform;
         render_quad(renderer, sprite, transform);
     }
 
