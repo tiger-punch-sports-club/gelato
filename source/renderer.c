@@ -208,8 +208,7 @@ void destroy_quad(Renderer* renderer)
 void render_quad(Renderer* renderer, Sprite* sprite, Transform* transform)
 {
     float model_matrix[16];
-    make_identity_matrix(&model_matrix[0]); //todo: extract matrix from sprite.transform
-    make_scale_matrix(1.0f, 1.0f, 1.0f, &model_matrix[0]);
+    make_transformation(transform, &model_matrix[0]);
 
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._model_matrix_location, 1, GL_FALSE, &model_matrix[0]));
     GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &transform->_uv_scale[0]));
@@ -262,20 +261,6 @@ void initialize_renderer(Renderer* renderer)
     init_render_target(renderer);
     init_quad(renderer);
 
-    float left = -1.0f;
-    float right = 1.0f;
-    float top = 1.0f;
-    float bottom = -1.0f;
-    float near_plane = -1.0f;
-    float far_plane = 1.0f;
-
-    make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
-    // todo: make projection onto real window size
-    // todo: then we need to use pixel_scale matrix!
-    // if not, then not!!
-    // layer.getCamera().setProjectionMatrix(new Mat4().initOrthographic(0, windowWidth, 0, windowHeight, -10, 10));
-    // use pixel_scale
-
     renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
 }
 
@@ -320,8 +305,8 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *new_width = (uint32) width;
     *new_height = (uint32) height;
 
-    *pixel_scale_x = win_width / virtual_width;     // win_width / virtual_width;
-    *pixel_scale_y = win_height / virtual_height;   // win_height / virtual_height;
+    *pixel_scale_x = win_width / virtual_width;
+    *pixel_scale_y = win_height / virtual_height;
 }
 
 void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
@@ -330,6 +315,15 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
     renderer->_window_height = window_height;
 
     fit_to_virtual_resolution(renderer->_window_width, renderer->_window_height, renderer->_virtual_target_width, renderer->_virtual_target_height, &renderer->_render_width, &renderer->_render_height, &renderer->_pixel_scale_x, &renderer->_pixel_scale_y);
+
+    float left = 0;
+    float right = (float) renderer->_window_width;
+    float top = (float) renderer->_window_height;
+    float bottom = 0;
+    float near_plane = -10.0f;
+    float far_plane = 10.0f;
+    
+    make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
 void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
@@ -350,12 +344,11 @@ void render(Renderer* renderer, Sprite* sprites, uint64 sprites_count)
 
     float pixel_scale_matrix[16];
     make_identity_matrix(&pixel_scale_matrix[0]);
-    // todo: use this only, if we use make_ortho with window_width and window_height as left, right, top, bottom boundries!
-    // make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
+    make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
 
     float view_matrix[16];
     make_identity_matrix(&view_matrix[0]);
-    // view_matrix = camera.matrix;
+    // todo: view_matrix = camera.matrix;
 
     float scaled_view_matrix[16];
     make_identity_matrix(&scaled_view_matrix[0]);

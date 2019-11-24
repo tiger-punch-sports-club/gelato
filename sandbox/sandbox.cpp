@@ -88,8 +88,10 @@ int main(void)
 	
 	// create sprite
 	Sprite sprite = create_sprite(texture);
-
 	stbi_image_free(data);
+
+	sprite._transform._scale[0] = 64.0f;
+	sprite._transform._scale[1] = 64.0f;
 
 	while (!glfwWindowShouldClose(window))
 	{

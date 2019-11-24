@@ -58,3 +58,9 @@ void make_projection_matrix(float left, float right, float bottom, float top, fl
 	dest[10] = -2.0f / delta_z;
     dest[14] = -(far_plane + near_plane) / delta_z;
 }
+
+void make_transformation(Transform* transform, float* dest)
+{
+    make_identity_matrix(dest);
+    make_scale_matrix(transform->_scale[0], transform->_scale[1], 1.0f, dest);
+}
