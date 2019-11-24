@@ -120,7 +120,6 @@ void destroy_shader(ShaderId* shader)
 void destroy_shaders(Renderer* renderer)
 {
     destroy_shader(&renderer->_sprite_shader._shader);
-    destroy_shader(&renderer->_to_screen_shader._shader);
 }
 
 uint32 compile_shader(GLenum shader_type, const char* source)

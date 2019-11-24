@@ -30,11 +30,6 @@ typedef struct SimpleSpriteShader
     int32 _sprite_texture_location;
 } SimpleSpriteShader;
 
-typedef struct ToScreenShader
-{
-    ShaderId _shader;
-} ToScreenShader;
-
 typedef struct Renderer
 {
     uint32 _window_width;
@@ -47,7 +42,6 @@ typedef struct Renderer
     float _pixel_scale_y;
 
     SimpleSpriteShader _sprite_shader;
-    ToScreenShader _to_screen_shader;
 
     TextureId _render_target;
 
