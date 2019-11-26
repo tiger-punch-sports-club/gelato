@@ -76,7 +76,7 @@ int main(void)
 	}
 
 	// create texture
-	TextureId texture = create_texture(
+	GelatoTextureId texture = create_texture(
 		(TextureDescription) 
 		{
 		    ._width = (uint32)image_width,
@@ -93,7 +93,7 @@ int main(void)
 	);
 	
 	// create sprite
-	Sprite sprite = create_sprite(texture);
+	GelatoSprite sprite = create_sprite(texture);
 	stbi_image_free(data);
 
 	sprite._transform._scale[0] = 64.0f;

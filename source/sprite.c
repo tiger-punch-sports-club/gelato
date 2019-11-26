@@ -1,8 +1,8 @@
 #include "sprite.h"
 
-Sprite create_sprite(TextureId texture)
+GelatoSprite create_sprite(GelatoTextureId texture)
 {
-    Sprite sprite =
+    GelatoSprite sprite =
     {
         ._texture = texture,
         ._transform =

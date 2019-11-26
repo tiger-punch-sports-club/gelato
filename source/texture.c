@@ -43,7 +43,7 @@ const struct TextureMagFilters TextureMagFilters =
     ._linear = { GL_LINEAR }
 };
 
-TextureId create_texture(TextureDescription texture_description, void* data)
+GelatoTextureId create_texture(TextureDescription texture_description, void* data)
 {
     GLuint texture_id;
 
@@ -60,10 +60,10 @@ TextureId create_texture(TextureDescription texture_description, void* data)
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
-    return (TextureId) { texture_id };
+    return (GelatoTextureId) { texture_id };
 }
 
-void destroy_texture(TextureId texture)
+void destroy_texture(GelatoTextureId texture)
 {
     GL_CHECK(glDeleteTextures(1, (GLuint*) &texture._id));
 } 

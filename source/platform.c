@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
-void check_gl_error(const char* file_name, int line_number)
+void gelato_check_gl_error(const char* file_name, int line_number)
 {
     int error = glGetError();
     if (error != 0)

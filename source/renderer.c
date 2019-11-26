@@ -76,7 +76,7 @@ void set_gl_state_post_render();
 void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
-void render_quad(GelatoRenderer* renderer, Sprite* sprite, GelatoTransform* transform);
+void render_quad(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
 
 void check_shader_error(uint32 shader)
 {
@@ -220,7 +220,7 @@ void destroy_quad(GelatoRenderer* renderer)
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
 }
 
-void render_quad(GelatoRenderer* renderer, Sprite* sprite, GelatoTransform* transform)
+void render_quad(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform)
 {
     float model_matrix[16];
     gelato_make_transformation(transform, &model_matrix[0]);
@@ -352,7 +352,7 @@ void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint3
     gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
-void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, Sprite* sprites, uint64 sprites_count)
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
@@ -386,7 +386,7 @@ void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, 
 
     for(uint64 i = 0; i < sprites_count; ++i)
     {
-        Sprite* sprite = &sprites[i];
+        GelatoSprite* sprite = &sprites[i];
         GelatoTransform* transform = &sprite->_transform;
         render_quad(renderer, sprite, transform);
     }

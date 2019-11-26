@@ -49,10 +49,10 @@ typedef struct TextureDescription
     TextureMagFilter _mag_filter;
 } TextureDescription;
 
-typedef struct TextureId
+typedef struct GelatoTextureId
 {
     uint64 _id;
-} TextureId;
+} GelatoTextureId;
 
 extern const struct TextureFormats
 {
@@ -95,5 +95,5 @@ extern const struct TextureMagFilters
     TextureMagFilter _linear;
 } TextureMagFilters;
 
-TextureId create_texture(TextureDescription texture_description, void* data);
-void destroy_texture(TextureId texture);
+GelatoTextureId create_texture(TextureDescription texture_description, void* data);
+void destroy_texture(GelatoTextureId texture);

@@ -2,12 +2,12 @@
 #include "texture.h"
 #include "utils.h"
 
-typedef struct Sprite
+typedef struct GelatoSprite
 {
-    TextureId _texture;
+    GelatoTextureId _texture;
     GelatoTransform _transform;
     float _uv_scale[2];
     float _uv_offset[2];
-} Sprite;
+} GelatoSprite;
 
-Sprite create_sprite(TextureId texture);
+GelatoSprite create_sprite(GelatoTextureId texture);
