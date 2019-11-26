@@ -149,24 +149,6 @@ uint32 compile_shader(GLenum shader_type, const char* source)
     return shader_id;
 }
 
-void init_render_target(GelatoRenderer* renderer)
-{
-    TextureDescription texture_desc =
-    {
-        ._width = renderer->_render_width,
-        ._height = renderer->_render_height,
-        ._format = TextureFormats._rgba,
-        ._internal_format = TextureInternalFormats._rgba8,
-        ._type = TextureTypes._float,
-        ._wrap_s = TextureWraps._clamp_to_edge,
-        ._wrap_t = TextureWraps._clamp_to_edge,
-        ._min_filter = TextureMinFilters._linear,
-        ._mag_filter = TextureMagFilters._linear
-    };
-
-    renderer->_render_target = create_texture(texture_desc, NULL);
-}
-
 void set_gl_state_pre_render(GelatoRenderer* renderer)
 {
     GL_CHECK(glEnable(GL_DEPTH_TEST));
@@ -279,8 +261,7 @@ void gelato_initialize_renderer(GelatoRenderer* renderer)
 
     if(glewInit() == GLEW_OK)
     {
-        init_shaders(renderer);
-        init_render_target(renderer);
+        init_shaders(renderer);    
         init_quad(renderer);
         gelato_renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
     }
@@ -293,7 +274,6 @@ void gelato_initialize_renderer(GelatoRenderer* renderer)
 void gelato_deinitialize_renderer(GelatoRenderer* renderer)
 {
     destroy_quad(renderer);
-    destroy_texture(renderer->_render_target);
     destroy_shaders(renderer);
 }
 

@@ -1,99 +1,99 @@
 #pragma once
 #include "platform.h"
 
-typedef struct TextureFormat
+typedef struct GelatoTextureFormat
 {
     uint32 _gl_enum;
-} TextureFormat;
+} GelatoTextureFormat;
 
-typedef struct TextureInternalFormat
+typedef struct GelatoTextureInternalFormat
 {
     uint32 _gl_enum;
-} TextureInternalFormat;
+} GelatoTextureInternalFormat;
 
-typedef struct TextureType
+typedef struct GelatoTextureType
 {
     uint32 _gl_enum;
-} TextureType;
+} GelatoTextureType;
 
-typedef struct TextureWrap
+typedef struct GelatoTextureWrap
 {
     uint32 _gl_enum;
-} TextureWrap;
+} GelatoTextureWrap;
 
-typedef struct TextureMinFilter
+typedef struct GelatoTextureMinFilter
 {
     uint32 _gl_enum;
-} TextureMinFilter;
+} GelatoTextureMinFilter;
 
-typedef struct TextureMagFilter
+typedef struct GelatoTextureMagFilter
 {
     uint32 _gl_enum;
-} TextureMagFilter;
+} GelatoTextureMagFilter;
 
-typedef struct TextureTarget
+typedef struct GelatoTextureTarget
 {
     uint32 _gl_enum;
-} TextureTarget;
+} GelatoTextureTarget;
 
-typedef struct TextureDescription
+typedef struct GelatoTextureDescription
 {
     uint32 _width;
     uint32 _height;
-    TextureFormat _format;
-    TextureInternalFormat _internal_format;
-    TextureType _type;
-    TextureWrap _wrap_s;
-    TextureWrap _wrap_t;
-    TextureMinFilter _min_filter;
-    TextureMagFilter _mag_filter;
-} TextureDescription;
+    GelatoTextureFormat _format;
+    GelatoTextureInternalFormat _internal_format;
+    GelatoTextureType _type;
+    GelatoTextureWrap _wrap_s;
+    GelatoTextureWrap _wrap_t;
+    GelatoTextureMinFilter _min_filter;
+    GelatoTextureMagFilter _mag_filter;
+} GelatoTextureDescription;
 
 typedef struct GelatoTextureId
 {
     uint64 _id;
 } GelatoTextureId;
 
-extern const struct TextureFormats
+extern const struct GelatoTextureFormats
 {
-    TextureFormat _rgb;
-    TextureFormat _rgba;
-} TextureFormats;
+    GelatoTextureFormat _rgb;
+    GelatoTextureFormat _rgba;
+} GelatoTextureFormats;
 
-extern const struct TextureInternalFormats
+extern const struct GelatoTextureInternalFormats
 {
-    TextureInternalFormat _rgb8;
-    TextureInternalFormat _rgba8;
-} TextureInternalFormats;
+    GelatoTextureInternalFormat _rgb8;
+    GelatoTextureInternalFormat _rgba8;
+} GelatoTextureInternalFormats;
 
-extern const struct TextureTypes
+extern const struct GelatoTextureTypes
 {
-    TextureType _float;
-    TextureType _unsigned_byte;
-} TextureTypes;
+    GelatoTextureType _float;
+    GelatoTextureType _unsigned_byte;
+} GelatoTextureTypes;
 
-extern const struct TextureWraps
+extern const struct GelatoTextureWraps
 {
-    TextureWrap _clamp_to_border;
-    TextureWrap _clamp_to_edge;
-    TextureWrap _repeat;
-} TextureWraps;
+    GelatoTextureWrap _clamp_to_border;
+    GelatoTextureWrap _clamp_to_edge;
+    GelatoTextureWrap _repeat;
+} GelatoTextureWraps;
 
-extern const struct TextureMinFilters
+extern const struct GelatoTextureMinFilters
 {
-    TextureMinFilter _nearest;
-    TextureMinFilter _linear;
-    TextureMinFilter _nearest_mipmap_nearest;
-    TextureMinFilter _linear_mipmap_nearest;
-    TextureMinFilter _nearest_mipmap_linear;
-    TextureMinFilter _linear_mipmap_linear;
-} TextureMinFilters;
+    GelatoTextureMinFilter _nearest;
+    GelatoTextureMinFilter _linear;
+    GelatoTextureMinFilter _nearest_mipmap_nearest;
+    GelatoTextureMinFilter _linear_mipmap_nearest;
+    GelatoTextureMinFilter _nearest_mipmap_linear;
+    GelatoTextureMinFilter _linear_mipmap_linear;
+} GelatoTextureMinFilters;
 
-extern const struct TextureMagFilters
+extern const struct GelatoTextureMagFilters
 {
-    TextureMagFilter _nearest;
-    TextureMagFilter _linear;
-} TextureMagFilters;
+    GelatoTextureMagFilter _nearest;
+    GelatoTextureMagFilter _linear;
+} GelatoTextureMagFilters;
 
-GelatoTextureId create_texture(TextureDescription texture_description, void* data);
-void destroy_texture(GelatoTextureId texture);
+GelatoTextureId gelato_create_texture(GelatoTextureDescription texture_description, void* data);
+void gelato_destroy_texture(GelatoTextureId texture);

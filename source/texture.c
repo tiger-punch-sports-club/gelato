@@ -2,32 +2,32 @@
 #include "texture.h"
 #include <GL/glew.h>
 
-const struct TextureFormats TextureFormats =
+const struct GelatoTextureFormats GelatoTextureFormats =
 {
     ._rgb = { GL_RGB },
     ._rgba = { GL_RGBA },
 };
 
-const struct TextureInternalFormats TextureInternalFormats =
+const struct GelatoTextureInternalFormats GelatoTextureInternalFormats =
 {
     ._rgb8 = { GL_RGB8 },
     ._rgba8 = { GL_RGBA8 },
 };
 
-const struct TextureTypes TextureTypes =
+const struct GelatoTextureTypes GelatoTextureTypes =
 {
     ._float = { GL_FLOAT },
     ._unsigned_byte = { GL_UNSIGNED_BYTE }
 };
 
-const struct TextureWraps TextureWraps =
+const struct GelatoTextureWraps GelatoTextureWraps =
 {
    ._clamp_to_border = { GL_CLAMP_TO_BORDER },
    ._clamp_to_edge = { GL_CLAMP_TO_EDGE },
    ._repeat = { GL_REPEAT }
 };
 
-const struct TextureMinFilters TextureMinFilters =
+const struct GelatoTextureMinFilters GelatoTextureMinFilters =
 {
    ._nearest = { GL_NEAREST },
    ._linear = { GL_LINEAR },
@@ -37,13 +37,13 @@ const struct TextureMinFilters TextureMinFilters =
    ._linear_mipmap_linear = { GL_LINEAR_MIPMAP_LINEAR }
 };
 
-const struct TextureMagFilters TextureMagFilters =
+const struct GelatoTextureMagFilters GelatoTextureMagFilters =
 {
     ._nearest = { GL_NEAREST },
     ._linear = { GL_LINEAR }
 };
 
-GelatoTextureId create_texture(TextureDescription texture_description, void* data)
+GelatoTextureId gelato_create_texture(GelatoTextureDescription texture_description, void* data)
 {
     GLuint texture_id;
 
@@ -63,7 +63,7 @@ GelatoTextureId create_texture(TextureDescription texture_description, void* dat
     return (GelatoTextureId) { texture_id };
 }
 
-void destroy_texture(GelatoTextureId texture)
+void gelato_destroy_texture(GelatoTextureId texture)
 {
     GL_CHECK(glDeleteTextures(1, (GLuint*) &texture._id));
 } 

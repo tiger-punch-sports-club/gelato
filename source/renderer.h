@@ -43,8 +43,6 @@ typedef struct GelatoRenderer
 
     GelatoSimpleSpriteShader _sprite_shader;
 
-    GelatoTextureId _render_target;
-
     float _projection_matrix[16];
     float _clear_color_letter_box[3];
     float _clear_color_render_target[3];

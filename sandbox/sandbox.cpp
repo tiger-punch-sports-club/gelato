@@ -76,18 +76,18 @@ int main(void)
 	}
 
 	// create texture
-	GelatoTextureId texture = create_texture(
-		(TextureDescription) 
+	GelatoTextureId texture = gelato_create_texture(
+		(GelatoTextureDescription) 
 		{
 		    ._width = (uint32)image_width,
 		    ._height = (uint32)image_height,
-		    ._format = TextureFormats._rgba,
-			._internal_format = TextureInternalFormats._rgba8,
-			._type = TextureTypes._unsigned_byte,
-			._wrap_s = TextureWraps._clamp_to_edge,
-			._wrap_t = TextureWraps._clamp_to_edge,
-			._min_filter = TextureMinFilters._nearest,
-    		._mag_filter = TextureMagFilters._nearest
+		    ._format = GelatoTextureFormats._rgba,
+			._internal_format = GelatoTextureInternalFormats._rgba8,
+			._type = GelatoTextureTypes._unsigned_byte,
+			._wrap_s = GelatoTextureWraps._clamp_to_edge,
+			._wrap_t = GelatoTextureWraps._clamp_to_edge,
+			._min_filter = GelatoTextureMinFilters._nearest,
+    		._mag_filter = GelatoTextureMagFilters._nearest
 		}, 
 		(void*) data
 	);
