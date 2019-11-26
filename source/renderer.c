@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <GL/glew.h>
+#include <stdbool.h>
 
 // ----------------------
 // Sprite quad data
@@ -64,6 +65,26 @@ const uint32 CFG_FLOATS_PER_SPRITE = CFG_FLOATS_PER_VERTEX * CFG_VERTEX_COUNT_PE
 const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
 const uint32 cfg_sprite_size_bytes = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
 const uint32 CFG_MAX_BOUND_TEXTURES = 16;
+
+struct 
+{
+    uint32 _bound_indices;
+    uint32 _bound_sprites;
+    uint32 _bound_textures;
+    uint32 _bound_batches;
+    uint32 _bound_offset;
+    bool texture_slots_are_full;
+
+} BATCH_RENDERER_STATE =
+{
+    ._bound_indices = 0,
+    ._bound_sprites = 0,
+    ._bound_textures = 0,
+    ._bound_batches = 0,
+    ._bound_offset = 0,
+    .texture_slots_are_full = false,
+} ;
+
 
 void check_shader_error(uint32 shader);
 uint32 compile_shader(GLenum shader_type, const char* source);
