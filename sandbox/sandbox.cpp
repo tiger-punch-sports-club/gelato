@@ -117,6 +117,15 @@ int main(void)
 			sprite._transform._angle_degrees = 0;
 		}
 
+		if (glfwGetKey(window, GLFW_KEY_RIGHT))
+		{
+			sprite._transform._position[0]++;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_LEFT))
+		{
+			sprite._transform._position[0]--;
+		}
+
 		gelato_render(&renderer, &camera_transform, &sprite, 1);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
