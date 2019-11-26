@@ -12,11 +12,11 @@ extern "C"
 	#include <sprite.h>
 }
 
-Renderer* g_renderer;
+GelatoRenderer* g_renderer;
 void on_window_resized(GLFWwindow* window, int width, int height)
 {
 	glfwGetFramebufferSize(window, &width, &height);
-	renderer_resize(g_renderer, width, height);
+	gelato_renderer_resize(g_renderer, width, height);
 }
 
 int main(void)
@@ -39,7 +39,7 @@ int main(void)
 	GLFWwindow *window = glfwCreateWindow(640, 480, "Gelato89 - Sandbox", NULL, NULL);
   	glfwMakeContextCurrent(window);
 
-	RendererDescription description = { 0 };
+	GelatoRendererDescription description = { 0 };
 	description._window_width = 640;
 	description._window_height = 480;
 	description._render_width = 640;
@@ -48,8 +48,8 @@ int main(void)
 	description._clear_color_render_target[1] = 0.4f;
 	description._clear_color_render_target[2] = 0.7f;
 
-	Renderer renderer = create_renderer(description);
-	initialize_renderer(&renderer);
+	GelatoRenderer renderer = gelato_create_renderer(description);
+	gelato_initialize_renderer(&renderer);
 	g_renderer = &renderer;
 	glfwSetWindowSizeCallback(window, on_window_resized);
 
@@ -117,12 +117,12 @@ int main(void)
 			sprite._transform._angle_degrees = 0;
 		}
 
-		render(&renderer, &camera_transform, &sprite, 1);
+		gelato_render(&renderer, &camera_transform, &sprite, 1);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 	
-	deinitialize_renderer(&renderer);
+	gelato_deinitialize_renderer(&renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 

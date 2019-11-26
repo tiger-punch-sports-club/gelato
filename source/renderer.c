@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
+// ----------------------
+// Sprite quad data
+// ----------------------
 const struct
 {
     float _vertices[20];
@@ -43,24 +46,37 @@ const struct
     ._index_count = 6
 };
 
-struct {
+struct
+{
     uint32 _vertex_array;
     uint32 _vertex_buffer;
     uint32 _index_buffer;
 } QUAD;
 
+// ----------------------
+// Batch renderer config
+// ----------------------
+const uint32 CFG_MAX_SPRITES_PER_BATCH = 1000;
+const uint32 CFG_MAX_INDICES = CFG_MAX_SPRITES_PER_BATCH * 6;
+const uint32 CFG_VERTEX_COUNT_PER_SPRITE = 4;
+const uint32 CFG_FLOATS_PER_VERTEX = 5;
+const uint32 CFG_FLOATS_PER_SPRITE = CFG_FLOATS_PER_VERTEX * CFG_VERTEX_COUNT_PER_SPRITE;
+const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
+const uint32 cfg_sprite_size_bytes = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
+const uint32 CFG_MAX_BOUND_TEXTURES = 16;
+
 void check_shader_error(uint32 shader);
 uint32 compile_shader(GLenum shader_type, const char* source);
-void init_shaders(Renderer* renderer);
-void destroy_shader(ShaderId* shader);
-void destroy_shaders(Renderer* renderer);
-void init_render_target(Renderer* renderer);
-void set_gl_state_pre_render(Renderer* renderer);
+void init_shaders(GelatoRenderer* renderer);
+void destroy_shader(GelatoShaderId* shader);
+void destroy_shaders(GelatoRenderer* renderer);
+void init_render_target(GelatoRenderer* renderer);
+void set_gl_state_pre_render(GelatoRenderer* renderer);
 void set_gl_state_post_render();
-void init_quad(Renderer* renderer);
-void destroy_quad(Renderer* renderer);
+void init_quad(GelatoRenderer* renderer);
+void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
-void render_quad(Renderer* renderer, Sprite* sprite, GelatoTransform* transform);
+void render_quad(GelatoRenderer* renderer, Sprite* sprite, GelatoTransform* transform);
 
 void check_shader_error(uint32 shader)
 {
@@ -78,9 +94,9 @@ void check_shader_error(uint32 shader)
     assert(success != 0);
 }
 
-void init_shaders(Renderer* renderer)
+void init_shaders(GelatoRenderer* renderer)
 {
-    ShaderId shader_program = { glCreateProgram() };
+    GelatoShaderId shader_program = { glCreateProgram() };
     uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\n}\n");
     uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(SpriteTexture, outVertexUV);\n}\n");
 
@@ -95,7 +111,7 @@ void init_shaders(Renderer* renderer)
 
     GL_CHECK(glUseProgram(0));
 
-    renderer->_sprite_shader = (SimpleSpriteShader)
+    renderer->_sprite_shader = (GelatoSimpleSpriteShader)
     {
         ._shader = shader_program,
         ._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
@@ -108,7 +124,7 @@ void init_shaders(Renderer* renderer)
     };
 }
 
-void destroy_shader(ShaderId* shader)
+void destroy_shader(GelatoShaderId* shader)
 {
     if (shader && shader->_id)
     {
@@ -117,7 +133,7 @@ void destroy_shader(ShaderId* shader)
     }
 }
 
-void destroy_shaders(Renderer* renderer)
+void destroy_shaders(GelatoRenderer* renderer)
 {
     destroy_shader(&renderer->_sprite_shader._shader);
 }
@@ -133,7 +149,7 @@ uint32 compile_shader(GLenum shader_type, const char* source)
     return shader_id;
 }
 
-void init_render_target(Renderer* renderer)
+void init_render_target(GelatoRenderer* renderer)
 {
     TextureDescription texture_desc =
     {
@@ -151,7 +167,7 @@ void init_render_target(Renderer* renderer)
     renderer->_render_target = create_texture(texture_desc, NULL);
 }
 
-void set_gl_state_pre_render(Renderer* renderer)
+void set_gl_state_pre_render(GelatoRenderer* renderer)
 {
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glEnable(GL_CULL_FACE));
@@ -183,7 +199,7 @@ void set_gl_state_post_render()
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 }
 
-void init_quad(Renderer* renderer)
+void init_quad(GelatoRenderer* renderer)
 {
     GL_CHECK(glGenVertexArrays(1, &QUAD._vertex_array));
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
@@ -197,14 +213,14 @@ void init_quad(Renderer* renderer)
     GL_CHECK(glBindVertexArray(0));
 }
 
-void destroy_quad(Renderer* renderer)
+void destroy_quad(GelatoRenderer* renderer)
 {
     GL_CHECK(glDeleteVertexArrays(1, &QUAD._vertex_array));
     GL_CHECK(glDeleteBuffers(1, &QUAD._vertex_buffer));
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
 }
 
-void render_quad(Renderer* renderer, Sprite* sprite, GelatoTransform* transform)
+void render_quad(GelatoRenderer* renderer, Sprite* sprite, GelatoTransform* transform)
 {
     float model_matrix[16];
     gelato_make_transformation(transform, &model_matrix[0]);
@@ -236,9 +252,9 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum b
 ********************* PUBLIC API ************************
 ********************************************************/
 
-Renderer create_renderer(RendererDescription renderer_description)
+GelatoRenderer gelato_create_renderer(GelatoRendererDescription renderer_description)
 {
-    Renderer renderer =
+    GelatoRenderer renderer =
     {
         ._window_width = renderer_description._window_width,
         ._window_height = renderer_description._window_height,
@@ -257,7 +273,7 @@ Renderer create_renderer(RendererDescription renderer_description)
     return renderer;
 }
 
-void initialize_renderer(Renderer* renderer)
+void gelato_initialize_renderer(GelatoRenderer* renderer)
 {
     glewExperimental = GL_TRUE;
 
@@ -266,7 +282,7 @@ void initialize_renderer(Renderer* renderer)
         init_shaders(renderer);
         init_render_target(renderer);
         init_quad(renderer);
-        renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
+        gelato_renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
     }
     else
     {
@@ -274,7 +290,7 @@ void initialize_renderer(Renderer* renderer)
     }
 }
 
-void deinitialize_renderer(Renderer* renderer)
+void gelato_deinitialize_renderer(GelatoRenderer* renderer)
 {
     destroy_quad(renderer);
     destroy_texture(renderer->_render_target);
@@ -319,7 +335,7 @@ void fit_to_virtual_resolution(uint32 window_width, uint32 window_height, uint32
     *pixel_scale_y = win_height / virtual_height;
 }
 
-void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_height)
+void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint32 window_height)
 {
     renderer->_window_width = window_width;
     renderer->_window_height = window_height;
@@ -336,7 +352,7 @@ void renderer_resize(Renderer* renderer, uint32 window_width, uint32 window_heig
     gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
-void render(Renderer* renderer, GelatoTransform* camera_transform, Sprite* sprites, uint64 sprites_count)
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, Sprite* sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
 
