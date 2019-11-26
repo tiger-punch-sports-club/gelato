@@ -110,7 +110,9 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		float angle_speed = 80.0f;
+		static float angle_speed = 80.0f;
+		static float move_speed = 20.0f;
+
 		sprite._transform._angle_degrees += 0.016f * angle_speed;
 		if(sprite._transform._angle_degrees >= 360)
 		{
@@ -119,11 +121,19 @@ int main(void)
 
 		if (glfwGetKey(window, GLFW_KEY_RIGHT))
 		{
-			sprite._transform._position[0]++;
+			sprite._transform._position[0] += move_speed;
 		}
 		else if (glfwGetKey(window, GLFW_KEY_LEFT))
 		{
-			sprite._transform._position[0]--;
+			sprite._transform._position[0] -= move_speed;
+		}
+			if (glfwGetKey(window, GLFW_KEY_UP))
+		{
+			sprite._transform._position[1] += move_speed;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_DOWN))
+		{
+			sprite._transform._position[1] -= move_speed;
 		}
 
 		gelato_render(&renderer, &camera_transform, &sprite, 1);
