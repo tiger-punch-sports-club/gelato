@@ -1,0 +1,1 @@
+"C:\Program Files\CMake\bin\cmake.EXE" --build "d:/Code/C/gelato89/build" --config Debug --target all -- -j 8
