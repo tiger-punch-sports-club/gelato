@@ -1,6 +1,6 @@
 #include "sprite.h"
 
-GelatoSprite create_sprite(GelatoTextureId texture)
+GelatoSprite gelato_create_sprite(GelatoTextureId texture)
 {
     GelatoSprite sprite =
     {

@@ -10,4 +10,4 @@ typedef struct GelatoSprite
     float _uv_offset[2];
 } GelatoSprite;
 
-GelatoSprite create_sprite(GelatoTextureId texture);
+GelatoSprite gelato_create_sprite(GelatoTextureId texture);

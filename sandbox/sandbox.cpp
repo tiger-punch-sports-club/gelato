@@ -93,7 +93,7 @@ int main(void)
 	);
 	
 	// create sprite
-	GelatoSprite sprite = create_sprite(texture);
+	GelatoSprite sprite = gelato_create_sprite(texture);
 	stbi_image_free(data);
 
 	sprite._transform._scale[0] = 64.0f;
