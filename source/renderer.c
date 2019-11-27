@@ -10,7 +10,7 @@
 // ----------------------
 const struct
 {
-    float _vertices[20];
+    float _vertices[40];
     uint32 _indices[6];
     uint32 _vertex_stride;
     uint32 _vertex_stride_bytes;
@@ -21,17 +21,25 @@ const struct
 {
     ._vertices =
     {
-        -1.0f, -1.0f, 0.0f,
-        0.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,         // Position 0
+        0.0f, 0.0f,                 // UV 0
+        1.0f, 1.0f, 1.0f, 1.0f,     // Color 0
+        0.0f,                       // Texture Index 0
 
-        1.0f, -1.0f, 0.0f,
-         1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,          // Position 1
+        1.0f, 0.0f,                 // UV 1
+        1.0f, 1.0f, 1.0f, 1.0f,     // Color 1
+        0.0f,                       // Texture Index 1
 
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f,
+        1.0f, 1.0f, 0.0f,           // Position 2
+        1.0f, 1.0f,                 // UV 2
+        1.0f, 1.0f, 1.0f, 1.0f,     // Color 2
+        0.0f,                       // Texture Index 2
 
-        -1.0f, 1.0f, 0.0f,
-        0.0f, 1.0f
+        -1.0f, 1.0f, 0.0f,          // Position 3
+        0.0f, 1.0f,                 // UV 3
+        1.0f, 1.0f, 1.0f, 1.0f,     // Color 3
+        0.0f                        // Texture Index 3
     },
 
     ._indices =
@@ -40,8 +48,8 @@ const struct
         2, 3, 0
     },
 
-    ._vertex_stride = 5,
-    ._vertex_stride_bytes = 5 * sizeof(float),
+    ._vertex_stride = 10,
+    ._vertex_stride_bytes = 10 * sizeof(float),
     ._face_count = 2,
     ._vertex_count = 4,
     ._index_count = 6
@@ -53,18 +61,6 @@ struct
     uint32 _vertex_buffer;
     uint32 _index_buffer;
 } QUAD;
-
-// ----------------------
-// Batch renderer config
-// ----------------------
-const uint32 CFG_MAX_SPRITES_PER_BATCH = 1000;
-const uint32 CFG_MAX_INDICES = CFG_MAX_SPRITES_PER_BATCH * 6;
-const uint32 CFG_VERTEX_COUNT_PER_SPRITE = 4;
-const uint32 CFG_FLOATS_PER_VERTEX = 5;
-const uint32 CFG_FLOATS_PER_SPRITE = CFG_FLOATS_PER_VERTEX * CFG_VERTEX_COUNT_PER_SPRITE;
-const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
-const uint32 CFG_SPRITE_SIZE_BYTES = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
-const uint32 CFG_MAX_BOUND_TEXTURES = 16;
 
 typedef struct Node
 {
@@ -132,8 +128,8 @@ void check_shader_error(uint32 shader)
 void init_shaders(GelatoRenderer* renderer)
 {
     GelatoShaderId shader_program = { glCreateProgram() };
-    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\n}\n");
-    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(SpriteTexture, outVertexUV);\n}\n");
+    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
+    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(SpriteTexture, outVertexUV) * outVertexColor * outVertexTextureIndex;\n}\n");
 
     GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
     GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
@@ -151,12 +147,22 @@ void init_shaders(GelatoRenderer* renderer)
         ._shader = shader_program,
         ._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
         ._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
+        ._color_attribute_location = glGetAttribLocation(shader_program._id, "VertexColor"),
+        ._texture_index_attribute_location = glGetAttribLocation(shader_program._id, "VertexTextureIndex"),
         ._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
         ._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
         ._uv_offset_location = glGetUniformLocation(shader_program._id, "UvOffset"),
         ._uv_scale_location = glGetUniformLocation(shader_program._id, "UvScale"),
-        ._sprite_texture_location = glGetUniformLocation(shader_program._id, "SpriteTexture")
+        ._sprite_texture_location = glGetUniformLocation(shader_program._id, "SpriteTexture"),
     };
+
+    char buffer[1024];
+
+    for (uint32 i = 0; i < CFG_MAX_BOUND_TEXTURES; i++)
+    {
+        sprintf(buffer, "TexturePool[%d]", i);
+        renderer->_sprite_shader._texture_pool_location[i] = glGetUniformLocation(shader_program._id, (const GLchar*) &buffer);
+    }
 }
 
 void destroy_shader(GelatoShaderId* shader)
@@ -288,6 +294,12 @@ void begin_render(GelatoRenderer* renderer)
 
     GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
     GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (3 * sizeof(float))));
+
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._color_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._color_attribute_location, 4, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (5 * sizeof(float))));
+
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._texture_index_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._texture_index_attribute_location, 1, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (9 * sizeof(float))));
 }
 
 void end_render(GelatoRenderer* renderer)
@@ -296,6 +308,8 @@ void end_render(GelatoRenderer* renderer)
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._texture_index_attribute_location));
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._color_attribute_location));
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
     GL_CHECK(glUseProgram(0));
@@ -335,23 +349,22 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
         flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count;
         if (flush)
         {
-            // copy data
-            glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES * BATCH_RENDERER_STATE._bound_sprites, &BATCH_RENDERER_STATE._vertex_data);
+            // // copy data
+            // GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES * BATCH_RENDERER_STATE._bound_sprites, &BATCH_RENDERER_STATE._vertex_data));
             
-            // bind textures
-            for (uint32 i = 0, l = BATCH_RENDERER_STATE._bound_textures; i < l; ++i)
-            {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, BATCH_RENDERER_STATE._bound_textures_list[i]);
+            // // bind textures
+            // for (uint32 i = 0, l = BATCH_RENDERER_STATE._bound_textures; i < l; ++i)
+            // {
+            //     GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+            //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, BATCH_RENDERER_STATE._bound_textures_list[i]._id));
+            //     GL_CHECK(glUniform1i(renderer->_sprite_shader._texture_pool_location[i], i));
+            // }
 
-                // String indentifier = "TexturePool[" + i + "]";
-                // int textureUniformLocation = glGetUniformLocation(shaderProgramID, indentifier);
-                // glUniform1i(textureUniformLocation, i);
-            }
+            // // draw call
+            // uint32 index_count = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._index_count;
+            // GL_CHECK(glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0));
 
-            // draw call
-            uint32 index_count = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._index_count;
-            glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+            render_quad(renderer, sprite, transform);
 
             reset_tracking();
         }
@@ -361,7 +374,11 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
 
 void submit(GelatoSprite* sprite, GelatoTransform* transform)
 {
-    // fill the vbo here!
+    // todo: don't forget to use the correct shader!
+    
+
+
+
     BATCH_RENDERER_STATE._bound_sprites++;
 }
 

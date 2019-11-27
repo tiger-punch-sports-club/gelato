@@ -3,6 +3,18 @@
 #include "texture.h"
 #include "sprite.h"
 
+// ----------------------
+// Batch renderer config
+// ----------------------
+const uint32 CFG_MAX_SPRITES_PER_BATCH = 1000;
+const uint32 CFG_MAX_INDICES = CFG_MAX_SPRITES_PER_BATCH * 6;
+const uint32 CFG_VERTEX_COUNT_PER_SPRITE = 4;
+const uint32 CFG_FLOATS_PER_VERTEX = 5;
+const uint32 CFG_FLOATS_PER_SPRITE = CFG_FLOATS_PER_VERTEX * CFG_VERTEX_COUNT_PER_SPRITE;
+const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
+const uint32 CFG_SPRITE_SIZE_BYTES = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
+const uint32 CFG_MAX_BOUND_TEXTURES = 16;
+
 typedef struct GelatoShaderId
 {
     uint32 _id;
@@ -23,11 +35,15 @@ typedef struct GelatoSimpleSpriteShader
     GelatoShaderId _shader;
     int32 _vertex_attribute_location;
     int32 _uv_attribute_location;
+    int32 _color_attribute_location;
+    int32 _texture_index_attribute_location;
     int32 _model_matrix_location;
     int32 _view_projection_matrix_location;
     int32 _uv_offset_location;
     int32 _uv_scale_location;
     int32 _sprite_texture_location;
+    int32 _texture_pool_location[CFG_MAX_BOUND_TEXTURES];
+
 } GelatoSimpleSpriteShader;
 
 typedef struct GelatoRenderer
