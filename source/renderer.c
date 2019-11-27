@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <GL/glew.h>
 #include <stdbool.h>
+#include <string.h>
 
 // ----------------------
 // Sprite quad data
