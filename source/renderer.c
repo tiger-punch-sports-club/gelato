@@ -129,7 +129,7 @@ void init_shaders(GelatoRenderer* renderer)
 {
     GelatoShaderId shader_program = { glCreateProgram() };
     uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
-    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D SpriteTexture;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(SpriteTexture, outVertexUV) * outVertexColor * outVertexTextureIndex;\n}\n");
+    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV) * outVertexColor;\n}\n");
 
     GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
     GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
