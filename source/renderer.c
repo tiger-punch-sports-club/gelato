@@ -63,7 +63,7 @@ const uint32 CFG_VERTEX_COUNT_PER_SPRITE = 4;
 const uint32 CFG_FLOATS_PER_VERTEX = 5;
 const uint32 CFG_FLOATS_PER_SPRITE = CFG_FLOATS_PER_VERTEX * CFG_VERTEX_COUNT_PER_SPRITE;
 const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
-const uint32 cfg_sprite_size_bytes = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
+const uint32 CFG_SPRITE_SIZE_BYTES = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
 const uint32 CFG_MAX_BOUND_TEXTURES = 16;
 
 typedef struct Node
@@ -79,7 +79,9 @@ struct
     uint32 _bound_textures;
     uint32 _bound_batches;
     uint32 _bound_offset;
+
     GelatoTextureId _bound_textures_list[CFG_MAX_BOUND_TEXTURES];
+    float _vertex_data[CFG_MAX_SPRITES_PER_BATCH * CFG_FLOATS_PER_SPRITE];
 } BATCH_RENDERER_STATE =
 {
     ._bound_indices = 0,
@@ -333,8 +335,24 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
         flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count;
         if (flush)
         {
-            render_quad(renderer, sprite, transform);
-            // render_batch
+            // copy data
+            glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES * BATCH_RENDERER_STATE._bound_sprites, &BATCH_RENDERER_STATE._vertex_data);
+            
+            // bind textures
+            for (uint32 i = 0, l = BATCH_RENDERER_STATE._bound_textures; i < l; ++i)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, BATCH_RENDERER_STATE._bound_textures_list[i]);
+
+                // String indentifier = "TexturePool[" + i + "]";
+                // int textureUniformLocation = glGetUniformLocation(shaderProgramID, indentifier);
+                // glUniform1i(textureUniformLocation, i);
+            }
+
+            // draw call
+            uint32 index_count = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._index_count;
+            glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+
             reset_tracking();
         }
     }

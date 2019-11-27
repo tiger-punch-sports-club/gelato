@@ -14,6 +14,8 @@
         "bitset": "c",
         "xhash": "c",
         "xutility": "c",
-        "ostream": "c"
+        "ostream": "c",
+        "algorithm": "c",
+        "locale": "c"
     }
 }
