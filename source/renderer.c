@@ -100,13 +100,12 @@ void set_gl_state_post_render();
 void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
-void render_quad(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
 
 void reset_tracking();
 void begin_render(GelatoRenderer* renderer);
 void end_render(GelatoRenderer* renderer);
 void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
-void submit(GelatoSprite* sprite, GelatoTransform* transform);
+void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
 bool texture_list_contains(GelatoTextureId texture);
 
 void check_shader_error(uint32 shader)
@@ -128,7 +127,7 @@ void check_shader_error(uint32 shader)
 void init_shaders(GelatoRenderer* renderer)
 {
     GelatoShaderId shader_program = { glCreateProgram() };
-    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "\n#version 150\nuniform mat4 ModelMatrix;\nuniform mat4 ViewProjectionMatrix;\nuniform vec2 UvOffset;\nuniform vec2 UvScale;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = (VertexUV * UvScale) + UvOffset;\ngl_Position = (ViewProjectionMatrix * ModelMatrix) * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
+    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
     uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV) * outVertexColor;\n}\n");
 
     GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
@@ -228,7 +227,7 @@ void init_quad(GelatoRenderer* renderer)
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
     
     uint32* vertices = (uint32*) (&QUAD_DATA._vertices);
-    QUAD._vertex_buffer = create_buffer(vertices, QUAD_DATA._vertex_stride_bytes, QUAD_DATA._vertex_count, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+    QUAD._vertex_buffer = create_buffer(vertices, QUAD_DATA._vertex_stride_bytes, QUAD_DATA._vertex_count, GL_ARRAY_BUFFER, GL_STREAM_DRAW);
 
     uint32* indices = (uint32*) (&QUAD_DATA._indices);
     QUAD._index_buffer = create_buffer(indices, sizeof(uint32), QUAD_DATA._index_count, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
@@ -241,22 +240,6 @@ void destroy_quad(GelatoRenderer* renderer)
     GL_CHECK(glDeleteVertexArrays(1, &QUAD._vertex_array));
     GL_CHECK(glDeleteBuffers(1, &QUAD._vertex_buffer));
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
-}
-
-void render_quad(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform)
-{
-    float model_matrix[16];
-    gelato_make_transformation(transform, &model_matrix[0]);
-
-    GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._model_matrix_location, 1, GL_FALSE, &model_matrix[0]));
-    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_scale_location, 1, &sprite->_uv_scale[0]));
-    GL_CHECK(glUniform2fv(renderer->_sprite_shader._uv_offset_location, 1, &sprite->_uv_offset[0]));
-    	
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, sprite->_texture._id));
-    GL_CHECK(glUniform1i(renderer->_sprite_shader._sprite_texture_location, 0));
-
-    GL_CHECK(glDrawElements(GL_TRIANGLES, QUAD_DATA._index_count, GL_UNSIGNED_INT, NULL));
 }
 
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type)
@@ -332,13 +315,13 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
 
             if (texture_exists_in_batch) 
             {
-                submit(sprite, transform);
+                submit(renderer, sprite, transform);
             } 
             else if (texture_list_has_room)
             {
                 BATCH_RENDERER_STATE._bound_textures_list[i] = sprite->_texture;
                 BATCH_RENDERER_STATE._bound_textures++;
-                submit(sprite, transform);
+                submit(renderer, sprite, transform);
             }
             else
             {
@@ -349,35 +332,65 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
         flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count;
         if (flush)
         {
-            // // copy data
-            // GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES * BATCH_RENDERER_STATE._bound_sprites, &BATCH_RENDERER_STATE._vertex_data));
+            // copy data
+            GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES * BATCH_RENDERER_STATE._bound_sprites, &BATCH_RENDERER_STATE._vertex_data));
             
-            // // bind textures
-            // for (uint32 i = 0, l = BATCH_RENDERER_STATE._bound_textures; i < l; ++i)
-            // {
-            //     GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
-            //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, BATCH_RENDERER_STATE._bound_textures_list[i]._id));
-            //     GL_CHECK(glUniform1i(renderer->_sprite_shader._texture_pool_location[i], i));
-            // }
+            // bind textures
+            for (uint32 i = 0, l = BATCH_RENDERER_STATE._bound_textures; i < l; ++i)
+            {
+                GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+                GL_CHECK(glBindTexture(GL_TEXTURE_2D, BATCH_RENDERER_STATE._bound_textures_list[i]._id));
+                GL_CHECK(glUniform1i(renderer->_sprite_shader._texture_pool_location[i], i));
+            }
 
-            // // draw call
-            // uint32 index_count = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._index_count;
-            // GL_CHECK(glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0));
-
-            render_quad(renderer, sprite, transform);
-
+            // draw call
+            uint32 index_count = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._index_count;
+            GL_CHECK(glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0));
+            
             reset_tracking();
         }
     }
 
 }
 
-void submit(GelatoSprite* sprite, GelatoTransform* transform)
+void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform)
 {
-    // todo: don't forget to use the correct shader!
+    uint32 current_offset = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._vertex_stride * QUAD_DATA._vertex_count;
+
+    // write position
+    float model_matrix[16];
+    gelato_make_transformation(transform, &model_matrix[0]);
+
+    float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
+    memcpy(vertex_data, &QUAD_DATA._vertices, QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
+
+    float vertex_position_0[3] = { vertex_data[0], vertex_data[1], vertex_data[2] };
+    gelato_mul_vec_matrix(&vertex_position_0[0], &model_matrix[0], &vertex_data[0]);
     
+    float vertex_position_1[3] = { vertex_data[QUAD_DATA._vertex_stride * 1], vertex_data[QUAD_DATA._vertex_stride * 1 + 1], vertex_data[QUAD_DATA._vertex_stride * 1 + 2] };
+    gelato_mul_vec_matrix(&vertex_position_1[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 1]);
+    
+    float vertex_position_2[3] = { vertex_data[QUAD_DATA._vertex_stride * 2], vertex_data[QUAD_DATA._vertex_stride * 2 + 1], vertex_data[QUAD_DATA._vertex_stride * 2 + 2] };
+    gelato_mul_vec_matrix(&vertex_position_2[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 2]);
+    
+    float vertex_position_3[3] = { vertex_data[QUAD_DATA._vertex_stride * 3], vertex_data[QUAD_DATA._vertex_stride * 3 + 1], vertex_data[QUAD_DATA._vertex_stride * 3 + 2] };
+    gelato_mul_vec_matrix(&vertex_position_3[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 3]);
 
+    // write colors
+    float* color_data = &BATCH_RENDERER_STATE._vertex_data[current_offset + 5];
+    float* color_0 = &color_data[0];
+    memcpy(color_0, &sprite->_color[0], 4 * sizeof(float));
+    
+    float* color_1 = &color_data[QUAD_DATA._vertex_stride * 1];
+    memcpy(color_1, &sprite->_color[0], 4 * sizeof(float));
 
+    float* color_2 = &color_data[QUAD_DATA._vertex_stride * 2];
+    memcpy(color_2, &sprite->_color[0], 4 * sizeof(float));
+
+    float* color_3 = &color_data[QUAD_DATA._vertex_stride * 3];
+    memcpy(color_3, &sprite->_color[0], 4 * sizeof(float));
+
+    // todo: uv-scale, uv-offsets
 
     BATCH_RENDERER_STATE._bound_sprites++;
 }
