@@ -10,6 +10,10 @@
         "vector": "cpp",
         "xstring": "cpp",
         "string.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "bitset": "c",
+        "xhash": "c",
+        "xutility": "c",
+        "ostream": "c"
     }
 }

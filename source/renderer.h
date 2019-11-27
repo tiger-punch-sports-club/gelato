@@ -52,4 +52,4 @@ GelatoRenderer gelato_create_renderer(GelatoRendererDescription renderer_descrip
 void gelato_initialize_renderer(GelatoRenderer* renderer);
 void gelato_deinitialize_renderer(GelatoRenderer* renderer);
 void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint32 window_height);
-void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sprites, uint64 sprites_count);
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint64 sprites_count);

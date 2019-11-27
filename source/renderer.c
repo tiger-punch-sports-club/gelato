@@ -66,6 +66,12 @@ const uint32 CFG_VERTEX_SIZE_BYTES = CFG_FLOATS_PER_VERTEX * sizeof(float);
 const uint32 cfg_sprite_size_bytes = CFG_VERTEX_SIZE_BYTES * CFG_VERTEX_COUNT_PER_SPRITE;
 const uint32 CFG_MAX_BOUND_TEXTURES = 16;
 
+typedef struct Node
+{
+    uint32 _data;
+    uint32 _next;
+} Node;
+
 struct 
 {
     uint32 _bound_indices;
@@ -73,8 +79,7 @@ struct
     uint32 _bound_textures;
     uint32 _bound_batches;
     uint32 _bound_offset;
-    bool texture_slots_are_full;
-
+    GelatoTextureId _bound_textures_list[CFG_MAX_BOUND_TEXTURES];
 } BATCH_RENDERER_STATE =
 {
     ._bound_indices = 0,
@@ -82,7 +87,7 @@ struct
     ._bound_textures = 0,
     ._bound_batches = 0,
     ._bound_offset = 0,
-    .texture_slots_are_full = false,
+    ._bound_textures_list = { 0 }
 } ;
 
 
@@ -98,6 +103,13 @@ void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
 void render_quad(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
+
+void reset_tracking();
+void begin_render(GelatoRenderer* renderer);
+void end_render(GelatoRenderer* renderer);
+void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
+void submit(GelatoSprite* sprite, GelatoTransform* transform);
+bool texture_list_contains(GelatoTextureId texture);
 
 void check_shader_error(uint32 shader)
 {
@@ -251,6 +263,103 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum b
     return handle;
 }
 
+void reset_tracking()
+{
+    BATCH_RENDERER_STATE._bound_indices = 0;
+    BATCH_RENDERER_STATE._bound_sprites = 0;
+    BATCH_RENDERER_STATE._bound_textures = 0;
+    BATCH_RENDERER_STATE._bound_batches = 0;
+    BATCH_RENDERER_STATE._bound_offset = 0;
+    BATCH_RENDERER_STATE._bound_sprites = 0;
+}
+
+void begin_render(GelatoRenderer* renderer)
+{
+    GL_CHECK(glBindVertexArray(QUAD._vertex_array));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD._index_buffer));
+
+    GL_CHECK(glUseProgram(renderer->_sprite_shader._shader._id));
+    
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._vertex_attribute_location, 3, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, NULL));
+
+    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (3 * sizeof(float))));
+}
+
+void end_render(GelatoRenderer* renderer)
+{
+    GL_CHECK(glBindVertexArray(0));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+    GL_CHECK(glUseProgram(0));
+}
+
+void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
+{
+    for(uint64 i = 0; i < sprites_count; ++i)
+    {
+        GelatoSprite* sprite = &sorted_sprites[i];
+        GelatoTransform* transform = &sprite->_transform;
+    
+        bool batch_has_room = BATCH_RENDERER_STATE._bound_sprites < CFG_MAX_SPRITES_PER_BATCH;
+        bool flush = !batch_has_room;
+
+        if (batch_has_room)
+        {
+            bool texture_list_has_room = BATCH_RENDERER_STATE._bound_textures < CFG_MAX_BOUND_TEXTURES;
+            bool texture_exists_in_batch = texture_list_contains(sprite->_texture);
+
+            if (texture_exists_in_batch) 
+            {
+                submit(sprite, transform);
+            } 
+            else if (texture_list_has_room)
+            {
+                BATCH_RENDERER_STATE._bound_textures_list[i] = sprite->_texture;
+                BATCH_RENDERER_STATE._bound_textures++;
+                submit(sprite, transform);
+            }
+            else
+            {
+                flush = true;
+            }
+        }
+        
+        flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count;
+        if (flush)
+        {
+            render_quad(renderer, sprite, transform);
+            // render_batch
+            reset_tracking();
+        }
+    }
+
+}
+
+void submit(GelatoSprite* sprite, GelatoTransform* transform)
+{
+    // fill the vbo here!
+    BATCH_RENDERER_STATE._bound_sprites++;
+}
+
+bool texture_list_contains(GelatoTextureId texture)
+{
+    for (uint32 i = 0; i < BATCH_RENDERER_STATE._bound_textures; i++)
+    {
+        if (BATCH_RENDERER_STATE._bound_textures_list[i]._id == texture._id)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /********************************************************
 ********************* PUBLIC API ************************
 ********************************************************/
@@ -353,22 +462,12 @@ void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint3
     gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
-void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sprites, uint64 sprites_count)
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint64 sprites_count)
 {
     set_gl_state_pre_render(renderer);
+    begin_render(renderer);
 
-    GL_CHECK(glBindVertexArray(QUAD._vertex_array));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD._index_buffer));
-
-    GL_CHECK(glUseProgram(renderer->_sprite_shader._shader._id));
-    
-    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
-    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._vertex_attribute_location, 3, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, NULL));
-
-    GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
-    GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (3 * sizeof(float))));
-
+    // set projection
     float pixel_scale_matrix[16];
     gelato_make_identity_matrix(&pixel_scale_matrix[0]);
     gelato_make_scale_matrix(renderer->_pixel_scale_x, renderer->_pixel_scale_y, 1.0f, &pixel_scale_matrix[0]);
@@ -382,23 +481,10 @@ void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, 
 
     float view_projection_matrix[16];
     gelato_mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
-
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
 
-    for(uint64 i = 0; i < sprites_count; ++i)
-    {
-        GelatoSprite* sprite = &sprites[i];
-        GelatoTransform* transform = &sprite->_transform;
-        render_quad(renderer, sprite, transform);
-    }
+    render_sprites(renderer, sorted_sprites, sprites_count);
 
-    GL_CHECK(glBindVertexArray(0));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
-    GL_CHECK(glUseProgram(0));
-
+    end_render(renderer);
     set_gl_state_post_render();
 }
