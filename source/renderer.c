@@ -96,7 +96,7 @@ void set_gl_state_pre_render(GelatoRenderer* renderer);
 void set_gl_state_post_render();
 void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
-uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type);
+uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type);
 
 void reset_tracking();
 void begin_render(GelatoRenderer* renderer);
@@ -223,13 +223,25 @@ void init_quad(GelatoRenderer* renderer)
     GL_CHECK(glGenVertexArrays(1, &QUAD._vertex_array));
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
     
-    // todo: build up vertex buffer and generate indices buffer properly!!!
+    QUAD._vertex_buffer = create_buffer(&BATCH_RENDERER_STATE._vertex_data[0], QUAD_DATA._vertex_stride_bytes, CFG_VERTEX_COUNT_PER_SPRITE * CFG_MAX_SPRITES_PER_BATCH, GL_ARRAY_BUFFER, GL_STREAM_DRAW);
 
-    uint32* vertices = (uint32*) (&QUAD_DATA._vertices);
-    QUAD._vertex_buffer = create_buffer(vertices, QUAD_DATA._vertex_stride_bytes, QUAD_DATA._vertex_count, GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+    uint32 indices[6 * CFG_MAX_SPRITES_PER_BATCH];
+    uint32 offset = 0;
+    for(uint32 i = 0; i < 6 * CFG_MAX_SPRITES_PER_BATCH;)
+    {  
 
-    uint32* indices = (uint32*) (&QUAD_DATA._indices);
-    QUAD._index_buffer = create_buffer(indices, sizeof(uint32), QUAD_DATA._index_count, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+        indices[i++] = offset + 0;
+        indices[i++] = offset + 1;
+        indices[i++] = offset + 2;
+        
+        indices[i++] = offset + 2;
+        indices[i++] = offset + 3;
+        indices[i++] = offset + 0;
+
+        offset += 4;
+    }
+    
+    QUAD._index_buffer = create_buffer(&indices, sizeof(uint32), 6 * CFG_MAX_SPRITES_PER_BATCH, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
     
     GL_CHECK(glBindVertexArray(0));
 }
@@ -241,13 +253,13 @@ void destroy_quad(GelatoRenderer* renderer)
     GL_CHECK(glDeleteBuffers(1, &QUAD._index_buffer));
 }
 
-uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 amount, GLenum buffer_type, GLenum buffer_type_usage_type)
+uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type)
 {
     uint32 handle;
 
     GL_CHECK(glGenBuffers(1, &handle));
     GL_CHECK(glBindBuffer(buffer_type, handle));
-    GL_CHECK(glBufferData(buffer_type, stride_in_bytes * amount, data, buffer_type_usage_type));
+    GL_CHECK(glBufferData(buffer_type, stride_in_bytes * element_count, data, buffer_type_usage_type));
     GL_CHECK(glBindBuffer(buffer_type, 0));
 
     return handle;
@@ -317,7 +329,7 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
             } 
             else if (texture_list_has_room)
             {
-                BATCH_RENDERER_STATE._bound_textures_list[i] = sprite->_texture;
+                BATCH_RENDERER_STATE._bound_textures_list[BATCH_RENDERER_STATE._bound_textures] = sprite->_texture;
                 BATCH_RENDERER_STATE._bound_textures++;
                 submit(renderer, sprite, transform);
             }
@@ -424,6 +436,8 @@ void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* tra
     // write texture index
     uint32 texture_index = 0;
     texture_list_contains(sprite->_texture, &texture_index);
+    GelatoTextureId tex = BATCH_RENDERER_STATE._bound_textures_list[texture_index];
+    texture_index = tex._id;
 
     float* texture_index_0 = color_0 + 4;
     *texture_index_0 = (float) texture_index;

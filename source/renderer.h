@@ -6,7 +6,7 @@
 // ----------------------
 // Batch renderer config
 // ----------------------
-const uint32 CFG_MAX_SPRITES_PER_BATCH = 1000;
+const uint32 CFG_MAX_SPRITES_PER_BATCH = 500;
 const uint32 CFG_MAX_INDICES = CFG_MAX_SPRITES_PER_BATCH * 6;
 const uint32 CFG_VERTEX_COUNT_PER_SPRITE = 4;
 const uint32 CFG_FLOATS_PER_VERTEX = 10;
