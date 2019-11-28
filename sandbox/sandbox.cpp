@@ -116,22 +116,40 @@ int main(void)
 	std::vector<GelatoSprite> sprites;
 
 	GelatoTextureId flamingo_texture = load_texture("content/flamingo.png");
-	for (int i = 0; i < 100; ++i)
-	{
-		GelatoSprite sprite = gelato_create_sprite(flamingo_texture);
-		uint32 width = 152.0f * 0.33f;
-		sprite._transform._scale[0] = width;
+	float width = 152.0f * 0.28f;
+	float height = 197.0f * 0.28f;
 
-		uint32 height = 197.0f * 0.33f;
+	float x_offset = (float)-width / 2.0f;
+	float y_offset = (float)-height / 2.0f;
+
+	uint32 max_x = renderer._virtual_target_width / (uint32)width * 1.5f;
+	uint32 count = 0;
+	for (int i = 0; i < 250; ++i)
+	{
+		x_offset += width;
+
+		GelatoSprite sprite = gelato_create_sprite(flamingo_texture);
+		sprite._transform._scale[0] = width;
 		sprite._transform._scale[1] = height;
 
-		uint32 screen_width = description._render_width;
-		float screen_width_step = (float) screen_width / width;
-
-		sprite._transform._position[0] = screen_width_step * i;
-		sprite._transform._position[1] = description._render_height / 2;
+		sprite._transform._position[0] = x_offset;
+		sprite._transform._position[1] = y_offset;
 
 		sprites.push_back(sprite);
+
+		count++;
+		if (count == max_x)
+		{
+			count = 0;
+			x_offset = (float)-width / 2.0f;
+			y_offset += 60;
+		}
+
+		if (y_offset >= renderer._virtual_target_height + height)
+		{
+			printf("broke after %d flamingos\n", i);
+			break;
+		}
 	}
 
 	sprites.push_back(pineapple);
