@@ -107,7 +107,7 @@ void begin_render(GelatoRenderer* renderer);
 void end_render(GelatoRenderer* renderer);
 void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
 void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
-bool texture_list_contains(GelatoTextureId texture);
+bool texture_list_contains(GelatoTextureId texture, uint32* index);
 
 void check_shader_error(uint32 shader)
 {
@@ -312,7 +312,7 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
         if (batch_has_room)
         {
             bool texture_list_has_room = BATCH_RENDERER_STATE._bound_textures < CFG_MAX_BOUND_TEXTURES;
-            bool texture_exists_in_batch = texture_list_contains(sprite->_texture);
+            bool texture_exists_in_batch = texture_list_contains(sprite->_texture, 0);
 
             if (texture_exists_in_batch) 
             {
@@ -358,50 +358,98 @@ void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* tra
 {
     uint32 current_offset = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._vertex_stride * QUAD_DATA._vertex_count;
 
-    // write position
+    float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
+    //  memcpy(vertex_data, &QUAD_DATA._vertices, QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
+
+    // create sprite transformation
     float model_matrix[16];
     gelato_make_transformation(transform, &model_matrix[0]);
 
-    float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
-    memcpy(vertex_data, &QUAD_DATA._vertices, QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
+    // write position
+    const float* quad_pos = &QUAD_DATA._vertices[0];
+    float* vertex_position_0 = (float*) quad_pos;
+    gelato_mul_vec_matrix(vertex_position_0, &model_matrix[0], &vertex_data[0]);
+    
+    float* vertex_position_1 = vertex_position_0 + QUAD_DATA._vertex_stride;
+    gelato_mul_vec_matrix(vertex_position_1, &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 1]);
+    
+    float* vertex_position_2 = vertex_position_1 + QUAD_DATA._vertex_stride;
+    gelato_mul_vec_matrix(vertex_position_2, &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 2]);
+    
+    float* vertex_position_3 = vertex_position_2 + QUAD_DATA._vertex_stride;
+    gelato_mul_vec_matrix(vertex_position_3, &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 3]);
 
-    float vertex_position_0[3] = { vertex_data[0], vertex_data[1], vertex_data[2] };
-    gelato_mul_vec_matrix(&vertex_position_0[0], &model_matrix[0], &vertex_data[0]);
-    
-    float vertex_position_1[3] = { vertex_data[QUAD_DATA._vertex_stride * 1], vertex_data[QUAD_DATA._vertex_stride * 1 + 1], vertex_data[QUAD_DATA._vertex_stride * 1 + 2] };
-    gelato_mul_vec_matrix(&vertex_position_1[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 1]);
-    
-    float vertex_position_2[3] = { vertex_data[QUAD_DATA._vertex_stride * 2], vertex_data[QUAD_DATA._vertex_stride * 2 + 1], vertex_data[QUAD_DATA._vertex_stride * 2 + 2] };
-    gelato_mul_vec_matrix(&vertex_position_2[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 2]);
-    
-    float vertex_position_3[3] = { vertex_data[QUAD_DATA._vertex_stride * 3], vertex_data[QUAD_DATA._vertex_stride * 3 + 1], vertex_data[QUAD_DATA._vertex_stride * 3 + 2] };
-    gelato_mul_vec_matrix(&vertex_position_3[0], &model_matrix[0], &vertex_data[QUAD_DATA._vertex_stride * 3]);
+    // write uv
+    float u_scale = sprite->_uv_scale[0];
+    float v_scale = sprite->_uv_scale[1];
 
+    float u_offset = sprite->_uv_offset[0];
+    float v_offset = sprite->_uv_offset[1];
+
+    uint32 uv_size = sizeof(float) * 2;
+    float* uvs = &vertex_data[3]; 
+    const float* quad_uvs = &QUAD_DATA._vertices[3];
+
+    float* uv_0 = &uvs[0];
+    memcpy(uv_0, quad_uvs, uv_size);
+    uv_0[0] *= u_scale + u_offset;
+    uv_0[1] *= v_scale + v_offset;
+
+    float* uv_1 = uv_0 + QUAD_DATA._vertex_stride;
+    memcpy(uv_1, quad_uvs + QUAD_DATA._vertex_stride, uv_size);
+    uv_1[0] *= u_scale + u_offset;
+    uv_1[1] *= v_scale + v_offset;
+
+    float* uv_2 = uv_1 + QUAD_DATA._vertex_stride;
+    memcpy(uv_2, quad_uvs + QUAD_DATA._vertex_stride * 2, uv_size);
+    uv_2[0] *= u_scale + u_offset;
+    uv_2[1] *= v_scale + v_offset;
+
+    float* uv_3 = uv_2 + QUAD_DATA._vertex_stride;
+    memcpy(uv_3, quad_uvs + QUAD_DATA._vertex_stride * 3, uv_size);
+    uv_3[0] *= u_scale + u_offset;
+    uv_3[1] *= v_scale + v_offset;
+    
     // write colors
-    float* color_data = &BATCH_RENDERER_STATE._vertex_data[current_offset + 5];
-    float* color_0 = &color_data[0];
-    memcpy(color_0, &sprite->_color[0], 4 * sizeof(float));
+    uint32 color_size = 4 * sizeof(float);
+    float* color_0 = &vertex_data[current_offset + 5];
+    memcpy(color_0, &sprite->_color[0], color_size);
     
-    float* color_1 = &color_data[QUAD_DATA._vertex_stride * 1];
-    memcpy(color_1, &sprite->_color[0], 4 * sizeof(float));
+    float* color_1 = color_0 + QUAD_DATA._vertex_stride;
+    memcpy(color_1, &sprite->_color[0], color_size);
 
-    float* color_2 = &color_data[QUAD_DATA._vertex_stride * 2];
-    memcpy(color_2, &sprite->_color[0], 4 * sizeof(float));
+    float* color_2 = color_1 + QUAD_DATA._vertex_stride;
+    memcpy(color_2, &sprite->_color[0], color_size);
 
-    float* color_3 = &color_data[QUAD_DATA._vertex_stride * 3];
-    memcpy(color_3, &sprite->_color[0], 4 * sizeof(float));
+    float* color_3 = color_2 + QUAD_DATA._vertex_stride;
+    memcpy(color_3, &sprite->_color[0], color_size);
 
-    // todo: uv-scale, uv-offsets
+    // write texture index
+    uint32 texture_index = 0;
+    texture_list_contains(sprite->_texture, &texture_index);
+
+    float* texture_index_0 = color_0 + 4;
+    *texture_index_0 = (float) texture_index;
+
+    float* texture_index_1 = texture_index_0 + QUAD_DATA._vertex_stride;
+    *texture_index_1 = (float) texture_index;
+
+    float* texture_index_2 = texture_index_1 + QUAD_DATA._vertex_stride;
+    *texture_index_2 = (float) texture_index;
+
+    float* texture_index_3 = texture_index_2 + QUAD_DATA._vertex_stride;
+    *texture_index_3 = (float) texture_index;
 
     BATCH_RENDERER_STATE._bound_sprites++;
 }
 
-bool texture_list_contains(GelatoTextureId texture)
+bool texture_list_contains(GelatoTextureId texture, uint32* index)
 {
     for (uint32 i = 0; i < BATCH_RENDERER_STATE._bound_textures; i++)
     {
         if (BATCH_RENDERER_STATE._bound_textures_list[i]._id == texture._id)
         {
+            *index = i;
             return true;
         }
     }
