@@ -315,7 +315,7 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
         GelatoTransform* transform = &sprite->_transform;
     
         bool batch_has_room = BATCH_RENDERER_STATE._bound_sprites < CFG_MAX_SPRITES_PER_BATCH;
-        bool flush = !batch_has_room;
+        bool flush = false;
 
         if (batch_has_room)
         {
@@ -339,7 +339,7 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
             }
         }
         
-        flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count;
+        flush = flush || BATCH_RENDERER_STATE._bound_sprites == sprites_count || BATCH_RENDERER_STATE._bound_sprites < CFG_MAX_SPRITES_PER_BATCH;
         if (flush)
         {
             // copy data
