@@ -52,7 +52,6 @@ typedef struct GelatoTextureDescription
 typedef struct GelatoTextureId
 {
     uint64 _id;
-    //todo: maybe put: uint32 _width; uint32 _height;
 } GelatoTextureId;
 
 extern const struct GelatoTextureFormats

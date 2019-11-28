@@ -20,7 +20,7 @@ void on_window_resized(GLFWwindow* window, int width, int height)
 	gelato_renderer_resize(g_renderer, width, height);
 }
 
-GelatoTextureId load_texture(const char* path)
+GelatoTextureId load_texture(const char* path, uint32& width, uint32& height)
 {
 	// load texture
 	const char* pineapple_image_path = path;
@@ -63,6 +63,8 @@ GelatoTextureId load_texture(const char* path)
 
 	stbi_image_free(data);
 
+	width = (uint32)image_width;
+	height = (uint32)image_height;
 	return texture;
 }
 
@@ -89,8 +91,8 @@ int main(void)
 	GelatoRendererDescription description = { 0 };
 	description._window_width = 640;
 	description._window_height = 480;
-	description._render_width = 640;
-	description._render_height = 480;
+	description._render_width = 1280;
+	description._render_height = 720;
 	description._clear_color_render_target[0] = 0.4f;
 	description._clear_color_render_target[1] = 0.4f;
 	description._clear_color_render_target[2] = 0.7f;
@@ -100,13 +102,20 @@ int main(void)
 	g_renderer = &renderer;
 	glfwSetWindowSizeCallback(window, on_window_resized);
 
-	GelatoTextureId texture = load_texture("content/pineapple.png");
-	GelatoSprite pineapple = gelato_create_sprite(texture);
-	pineapple._transform._scale[0] = 59.0f * 0.55f;
-	pineapple._transform._scale[1] = 118.0f * 0.55f;
-	pineapple._transform._position[0] = 320.0f;
-	pineapple._transform._position[1] = 240.0f;
-	pineapple._transform._position[2] = 5.f;
+	uint32 pineapple_texture_width = 0;
+	uint32 pineapple_texture_height = 0;
+	GelatoTextureId pineapple_texture = load_texture("content/pineapple.png", pineapple_texture_width, pineapple_texture_height);
+
+	uint32 cat_texture_width = 0;
+	uint32 cat_texture_height = 0;
+	GelatoTextureId cat_texture = load_texture("content/cat.png", cat_texture_width, cat_texture_height);
+
+	GelatoSprite the_main_sprite = gelato_create_sprite(cat_texture);
+	the_main_sprite._transform._scale[0] = cat_texture_width * 0.35f;
+	the_main_sprite._transform._scale[1] = cat_texture_height * 0.35f;
+	the_main_sprite._transform._position[0] = renderer._virtual_target_width / 2.0f;
+	the_main_sprite._transform._position[1] = renderer._virtual_target_height / 2.0f;
+	the_main_sprite._transform._position[2] = 1.f;
 
 
 	GelatoTransform camera_transform = {};
@@ -115,22 +124,26 @@ int main(void)
 
 	std::vector<GelatoSprite> sprites;
 
-	GelatoTextureId flamingo_texture = load_texture("content/flamingo.png");
-	float width = 152.0f * 0.28f;
-	float height = 197.0f * 0.28f;
+	uint32 flamingo_texture_width = 0;
+	uint32 flamingo_texture_height = 0;
+	GelatoTextureId flamingo_texture = load_texture("content/flamingo.png", flamingo_texture_width, flamingo_texture_height);
+	float width = flamingo_texture_width * 0.28f;
+	float height = flamingo_texture_height * 0.28f;
 
 	float x_offset = (float)-width / 2.0f;
 	float y_offset = (float)-height / 2.0f;
 
 	uint32 max_x = renderer._virtual_target_width / (uint32)width * 1.5f;
 	uint32 count = 0;
-	for (int i = 0; i < 250; ++i)
+	for (int i = 0; i < 666; ++i)
 	{
 		x_offset += width;
 
-		GelatoSprite sprite = gelato_create_sprite(flamingo_texture);
-		sprite._transform._scale[0] = width;
-		sprite._transform._scale[1] = height;
+		bool second_sprite = i % 2 != 0;
+		GelatoSprite sprite = gelato_create_sprite(second_sprite ? flamingo_texture : pineapple_texture);
+		
+		sprite._transform._scale[0] = second_sprite ? width : pineapple_texture_width * 0.75f * 0.55f;
+		sprite._transform._scale[1] = second_sprite ? height : pineapple_texture_height * 0.75f * 0.55f;
 
 		sprite._transform._position[0] = x_offset;
 		sprite._transform._position[1] = y_offset;
@@ -152,11 +165,11 @@ int main(void)
 		}
 	}
 
-	sprites.push_back(pineapple);
+	sprites.push_back(the_main_sprite);
 	GelatoSprite& pineapple_sprite = sprites[sprites.size() - 1];
 	while (!glfwWindowShouldClose(window))
 	{
-		static float angle_speed = 80.0f;
+		static float angle_speed = 40.0f;
 		static float move_speed = 10.0f;
 
 		pineapple_sprite._transform._angle_degrees += 0.016f * angle_speed;
@@ -180,6 +193,16 @@ int main(void)
 		else if (glfwGetKey(window, GLFW_KEY_DOWN))
 		{
 			pineapple_sprite._transform._position[1] -= move_speed;
+		}
+
+		for (int i = 0; i < sprites.size() / 2; ++i)
+		{
+			GelatoSprite& sprite = sprites.at(i * 2);
+			sprite._transform._angle_degrees -= 0.016f * angle_speed / 8;
+			if(sprite._transform._angle_degrees <= -360.0f)
+			{
+				sprite._transform._angle_degrees = 0.0f;
+			}
 		}
 
 		gelato_render(&renderer, &camera_transform, sprites.data(), sprites.size());
