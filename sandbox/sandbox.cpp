@@ -95,7 +95,7 @@ int main(void)
 	description._render_height = 720;
 	description._clear_color_render_target[0] = 0.4f;
 	description._clear_color_render_target[1] = 0.4f;
-	description._clear_color_render_target[2] = 0.7f;
+	description._clear_color_render_target[2] = 0.9f;
 
 	GelatoRenderer renderer = gelato_create_renderer(description);
 	gelato_initialize_renderer(&renderer);

@@ -23,6 +23,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/platform.c
     ${PROJECT_SOURCE_DIR}/renderer.c
     ${PROJECT_SOURCE_DIR}/sprite.c
+    ${PROJECT_SOURCE_DIR}/animation.c
     ${PROJECT_SOURCE_DIR}/utils.c
 )
 target_link_libraries(gelato89 PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE glew)
