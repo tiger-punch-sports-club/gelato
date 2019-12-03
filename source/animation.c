@@ -1,8 +1,9 @@
 #include "animation.h"
 #include <stdlib.h>
 
-GelatoFlipbookAnimation gelato_create_flipbook_animation(uint32 sprite_sheet_width, uint32 sprite_sheet_height, uint32 tile_count_x, uint32 tile_count_y)
+GelatoFlipbookAnimation gelato_create_flipbook_animation(GelatoFlipbookAnimationDescription* description)
 {
+    // todo: determine tile size, to do uv-stepping
     GelatoFlipbookAnimation animation = { 0 };
     return animation;
 }

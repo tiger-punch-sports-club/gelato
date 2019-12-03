@@ -85,7 +85,9 @@ struct
     ._bound_textures_list = { 0 }
 } ;
 
-
+// --------------------
+// helper functions
+// --------------------
 void check_shader_error(uint32 shader);
 uint32 compile_shader(GLenum shader_type, const char* source);
 void init_shaders(GelatoRenderer* renderer);
@@ -98,12 +100,20 @@ void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type);
 
+// --------------------
+// batch rendering
+// --------------------
 void reset_tracking();
 void begin_render(GelatoRenderer* renderer);
 void end_render(GelatoRenderer* renderer);
 void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
 void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
 bool texture_list_contains(GelatoTextureId texture, uint32* index);
+
+// -------------------
+// depth peeling
+// -------------------
+void depth_peeling();
 
 void check_shader_error(uint32 shader)
 {
