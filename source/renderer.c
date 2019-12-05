@@ -113,7 +113,7 @@ bool texture_list_contains(GelatoTextureId texture, uint32* index);
 // -------------------
 // depth peeling
 // -------------------
-void depth_peeling();
+void depth_peeling(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
 
 void check_shader_error(uint32 shader)
 {
@@ -479,6 +479,11 @@ bool texture_list_contains(GelatoTextureId texture, uint32* index)
     return false;
 }
 
+void depth_peeling(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
+{
+
+}
+
 /********************************************************
 ********************* PUBLIC API ************************
 ********************************************************/
@@ -602,6 +607,7 @@ void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, 
     gelato_mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
 
+    depth_peeling(renderer, sorted_sprites, sprites_count);
     render_sprites(renderer, sorted_sprites, sprites_count);
 
     end_render(renderer);
