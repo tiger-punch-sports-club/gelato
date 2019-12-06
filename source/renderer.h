@@ -57,6 +57,10 @@ typedef struct GelatoRenderer
     float _pixel_scale_x;
     float _pixel_scale_y;
 
+    uint32 _msaa_framebuffer;
+    GelatoTextureId _msaa_render_target;
+    GelatoTextureId _msaa_depth_buffer;
+
     GelatoSimpleSpriteShader _sprite_shader;
 
     float _projection_matrix[16];
