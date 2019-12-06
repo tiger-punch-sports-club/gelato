@@ -206,6 +206,11 @@ void set_gl_state_pre_render(GelatoRenderer* renderer)
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glCullFace(GL_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
+    GL_CHECK(glEnable(GL_MULTISAMPLE));
+    GL_CHECK(glEnable(GL_ALPHA_TEST));
+    GL_CHECK(glAlphaFunc(GL_GREATER, 0.0f));
+    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_ONE));
 
     GL_CHECK(glViewport(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glScissor(0, 0, renderer->_window_width, renderer->_window_height));
@@ -222,6 +227,9 @@ void set_gl_state_pre_render(GelatoRenderer* renderer)
 
 void set_gl_state_post_render()
 {
+    GL_CHECK(glDisable(GL_MULTISAMPLE));
+    GL_CHECK(glDisable(GL_ALPHA_TEST));
+    GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
     GL_CHECK(glDisable(GL_DEPTH_TEST));
     GL_CHECK(glDisable(GL_CULL_FACE));
     GL_CHECK(glDisable(GL_BLEND));
