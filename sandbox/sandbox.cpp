@@ -147,6 +147,7 @@ int main(void)
 
 		sprite._transform._position[0] = x_offset;
 		sprite._transform._position[1] = y_offset;
+		sprite._transform._position[2] = ((float)rand() / (float)RAND_MAX) * 3.0f;
 
 		sprites.push_back(sprite);
 

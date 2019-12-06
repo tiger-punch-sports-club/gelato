@@ -481,7 +481,9 @@ bool texture_list_contains(GelatoTextureId texture, uint32* index)
 
 void depth_peeling(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
 {
-
+    // todo: alpha to coverage
+    // todo: depth peeling
+    // 
 }
 
 /********************************************************
@@ -576,10 +578,10 @@ void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint3
 
     fit_to_virtual_resolution(renderer->_window_width, renderer->_window_height, renderer->_virtual_target_width, renderer->_virtual_target_height, &renderer->_render_width, &renderer->_render_height, &renderer->_pixel_scale_x, &renderer->_pixel_scale_y);
 
-    float left = 0;
+    float left = 0.0f;
     float right = (float) renderer->_window_width;
     float top = (float) renderer->_window_height;
-    float bottom = 0;
+    float bottom = 0.0f;
     float near_plane = -10.0f;
     float far_plane = 10.0f;
 
