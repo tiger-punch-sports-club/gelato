@@ -51,7 +51,7 @@ typedef struct GelatoTextureDescription
 
 typedef struct GelatoTextureId
 {
-    uint64 _id;
+    uint32 _id;
 } GelatoTextureId;
 
 extern const struct GelatoTextureFormats
