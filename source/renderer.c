@@ -99,9 +99,6 @@ void set_gl_state_post_render();
 void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type);
-void init_msaa_framebuffer(GelatoRenderer* renderer, uint32 sample_count);
-void destroy_msaa_framebuffer(GelatoRenderer* renderer);
-void create_msaa_render_target(GelatoRenderer* renderer, uint32 sample_count);
 
 // --------------------
 // batch rendering
@@ -277,43 +274,6 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, G
     return handle;
 }
 
-void init_msaa_framebuffer(GelatoRenderer* renderer, uint32 sample_count)
-{
-    GL_CHECK(glEnable(GL_MULTISAMPLE));
-    
-    // generate render target
-    create_msaa_render_target(renderer, sample_count); 
-
-    // generate msaa framebuffer
-    GL_CHECK(glGenFramebuffers(1, &renderer->_msaa_framebuffer));
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderer->_msaa_framebuffer));
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id, 0));
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id, 0));
-    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-}
-
-void destroy_msaa_framebuffer(GelatoRenderer* renderer)
-{
-    GL_CHECK(glDisable(GL_MULTISAMPLE));
-    GL_CHECK(glDeleteFramebuffers(1, &renderer->_msaa_framebuffer));
-    gelato_destroy_texture(renderer->_msaa_render_target);
-    gelato_destroy_texture(renderer->_msaa_depth_buffer);
-}
-
-void create_msaa_render_target(GelatoRenderer* renderer, uint32 sample_count)
-{
-    GL_CHECK(glGenTextures(1, &renderer->_msaa_depth_buffer._id));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id));
-    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_DEPTH_COMPONENT, renderer->_render_width, renderer->_render_height, GL_TRUE));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0));
-
-    GL_CHECK(glGenTextures(1, &renderer->_msaa_render_target._id));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id));
-    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_RGBA8, renderer->_render_width, renderer->_render_height, GL_TRUE));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0));
-}
-
 void reset_tracking()
 {
     for (uint32 i = 0; i < BATCH_RENDERER_STATE._bound_textures; ++i)
@@ -329,14 +289,6 @@ void reset_tracking()
 
 void begin_render(GelatoRenderer* renderer)
 {
-    // bind msaa framebuffer
-    // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderer->_msaa_framebuffer));
-    // GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id, 0));
-    // GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id, 0));
-    // GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_NONE };
-    // GL_CHECK(glDrawBuffers(2, buffers));
-    // GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD._index_buffer));
@@ -367,18 +319,6 @@ void end_render(GelatoRenderer* renderer)
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
     GL_CHECK(glUseProgram(0));
-
-    // unbind msaa framebuffer 
-    // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    
-    // blit framebuffer to screen
-
-    // GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
-    // GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
-    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-    // GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->_msaa_framebuffer));
-    // GL_CHECK(glDrawBuffer(GL_BACK));
-    // GL_CHECK(glBlitFramebuffer(0, 0, renderer->_render_width, renderer->_render_height, 0, 0, renderer->_render_width, renderer->_render_height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
@@ -580,7 +520,6 @@ void gelato_initialize_renderer(GelatoRenderer* renderer)
 
     if(glewInit() == GLEW_OK)
     {
-        init_msaa_framebuffer(renderer, 4);
         init_shaders(renderer);
         init_quad(renderer);
         gelato_renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
@@ -595,7 +534,6 @@ void gelato_deinitialize_renderer(GelatoRenderer* renderer)
 {
     destroy_shaders(renderer);
     destroy_quad(renderer);
-    destroy_msaa_framebuffer(renderer);
 }
 
 void max_resolution_aspect_ratio(float target_resolution_width, float target_resolution_height, float current_resolution_width, float current_resolution_height, float* new_width, float* new_height)
@@ -651,10 +589,6 @@ void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint3
     float far_plane = 10.0f;
 
     gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
-
-    gelato_destroy_texture(renderer->_msaa_depth_buffer);
-    gelato_destroy_texture(renderer->_msaa_render_target);
-    create_msaa_render_target(renderer, 4);
 }
 
 void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint64 sprites_count)
