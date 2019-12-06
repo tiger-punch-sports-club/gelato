@@ -289,6 +289,7 @@ void init_msaa_framebuffer(GelatoRenderer* renderer, uint32 sample_count)
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderer->_msaa_framebuffer));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id, 0));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id, 0));
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
@@ -303,21 +304,13 @@ void destroy_msaa_framebuffer(GelatoRenderer* renderer)
 void create_msaa_render_target(GelatoRenderer* renderer, uint32 sample_count)
 {
     GL_CHECK(glGenTextures(1, &renderer->_msaa_depth_buffer._id));
-    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_DEPTH_COMPONENT, renderer->_render_width, renderer->_render_height, false));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_DEPTH_COMPONENT, renderer->_render_width, renderer->_render_height, GL_TRUE));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0));
 
     GL_CHECK(glGenTextures(1, &renderer->_msaa_render_target._id));
-    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_RGBA8, renderer->_render_width, renderer->_render_height, false));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample_count, GL_RGBA8, renderer->_render_width, renderer->_render_height, GL_TRUE));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0));
 }
 
@@ -336,12 +329,13 @@ void reset_tracking()
 
 void begin_render(GelatoRenderer* renderer)
 {
-    // todo: bind framebuffer before rendering
+    // bind msaa framebuffer
     // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, renderer->_msaa_framebuffer));
     // GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_render_target._id, 0));
     // GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->_msaa_depth_buffer._id, 0));
     // GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_NONE };
     // GL_CHECK(glDrawBuffers(2, buffers));
+    // GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     GL_CHECK(glBindVertexArray(QUAD._vertex_array));
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, QUAD._vertex_buffer));
@@ -373,10 +367,18 @@ void end_render(GelatoRenderer* renderer)
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
     GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
     GL_CHECK(glUseProgram(0));
-    
+
+    // unbind msaa framebuffer 
     // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    // todo: unbind framebuffer after rendering
-    // todo: blit framebuffer with correct coordinates and sizes (check viewport and stuff for that)
+    
+    // blit framebuffer to screen
+
+    // GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
+    // GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    // GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->_msaa_framebuffer));
+    // GL_CHECK(glDrawBuffer(GL_BACK));
+    // GL_CHECK(glBlitFramebuffer(0, 0, renderer->_render_width, renderer->_render_height, 0, 0, renderer->_render_width, renderer->_render_height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
 void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
