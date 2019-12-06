@@ -110,11 +110,6 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
 void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform);
 bool texture_list_contains(GelatoTextureId texture, uint32* index);
 
-// -------------------
-// depth peeling
-// -------------------
-void depth_peeling(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count);
-
 void check_shader_error(uint32 shader)
 {
     char error[1024];
@@ -135,7 +130,7 @@ void init_shaders(GelatoRenderer* renderer)
 {
     GelatoShaderId shader_program = { glCreateProgram() };
     uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
-    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\noutColor = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV) * outVertexColor;\n}\n");
+    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV);\nif (color.a <= 0.0f) {\ndiscard;\n}\n outColor = color * outVertexColor;\n}");
 
     GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
     GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
@@ -206,11 +201,6 @@ void set_gl_state_pre_render(GelatoRenderer* renderer)
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glCullFace(GL_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
-    GL_CHECK(glEnable(GL_MULTISAMPLE));
-    GL_CHECK(glEnable(GL_ALPHA_TEST));
-    GL_CHECK(glAlphaFunc(GL_GREATER, 0.0f));
-    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_ONE));
 
     GL_CHECK(glViewport(0, 0, renderer->_window_width, renderer->_window_height));
     GL_CHECK(glScissor(0, 0, renderer->_window_width, renderer->_window_height));
@@ -227,9 +217,6 @@ void set_gl_state_pre_render(GelatoRenderer* renderer)
 
 void set_gl_state_post_render()
 {
-    GL_CHECK(glDisable(GL_MULTISAMPLE));
-    GL_CHECK(glDisable(GL_ALPHA_TEST));
-    GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
     GL_CHECK(glDisable(GL_DEPTH_TEST));
     GL_CHECK(glDisable(GL_CULL_FACE));
     GL_CHECK(glDisable(GL_BLEND));
@@ -487,13 +474,6 @@ bool texture_list_contains(GelatoTextureId texture, uint32* index)
     return false;
 }
 
-void depth_peeling(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint32 sprites_count)
-{
-    // todo: alpha to coverage
-    // todo: depth peeling
-    // 
-}
-
 /********************************************************
 ********************* PUBLIC API ************************
 ********************************************************/
@@ -617,7 +597,6 @@ void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, 
     gelato_mul_matrix(&renderer->_projection_matrix[0], &scaled_view_matrix[0], &view_projection_matrix[0]);
     GL_CHECK(glUniformMatrix4fv(renderer->_sprite_shader._view_projection_matrix_location, 1, GL_FALSE, &view_projection_matrix[0]));
 
-    depth_peeling(renderer, sorted_sprites, sprites_count);
     render_sprites(renderer, sorted_sprites, sprites_count);
 
     end_render(renderer);
