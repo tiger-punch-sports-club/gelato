@@ -115,7 +115,7 @@ int main(void)
 	the_main_sprite._transform._scale[1] = cat_texture_height * 0.35f;
 	the_main_sprite._transform._position[0] = renderer._virtual_target_width / 2.0f;
 	the_main_sprite._transform._position[1] = renderer._virtual_target_height / 2.0f;
-	the_main_sprite._transform._position[2] = 1.f;
+	the_main_sprite._transform._position[2] = 8.f;
 
 
 	GelatoTransform camera_transform = {};
