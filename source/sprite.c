@@ -19,8 +19,11 @@ GelatoSprite gelato_create_sprite(GelatoTextureId texture)
         ._uv_scale[0] = 1.0f,
         ._uv_scale[1] = 1.0f,
 
-        ._uv_offset[0] = 0.0f,
-        ._uv_offset[1] = 0.0f,
+        ._uv_start[0] = 0.0f,
+        ._uv_start[1] = 0.0f,
+
+        ._uv_end[0] = 1.0f,
+        ._uv_end[1] = 1.0f,
 
         ._color[0] = 1.0f,
         ._color[1] = 1.0f,
@@ -29,4 +32,34 @@ GelatoSprite gelato_create_sprite(GelatoTextureId texture)
     };
 
     return sprite;
+}
+
+GelatoSpriteSheetInfo gelato_create_sprite_sheet(GelatoSpriteSheetDescription description, GelatoTextureId texture)
+{
+    GelatoSpriteSheetInfo info =
+    {
+        ._texture_id = texture,
+
+        ._tiles_count_u = description._width / description._tile_size_x,
+        ._tiles_count_v = description._height / description._tile_size_y,    
+        
+        ._u_step = 1.0f / (float) (description._width / description._tile_size_x),
+        ._v_step = 1.0f / (float) (description._height / description._tile_size_y)
+    };
+
+    return info;
+}
+
+void gelato_change_sprite_tile(GelatoSprite* sprite, uint32 u_index, uint32 v_index, GelatoSpriteSheetInfo info)
+{    
+    sprite->_texture = info._texture_id;
+
+    float u_step = info._u_step * u_index;
+    float v_step = info._v_step * v_index;
+
+    sprite->_uv_start[0] = u_step;
+    sprite->_uv_start[1] = 1.0f - v_step - info._v_step;
+
+    sprite->_uv_end[0] = sprite->_uv_start[0] + info._u_step;
+    sprite->_uv_end[1] = sprite->_uv_start[1] + info._v_step;
 }

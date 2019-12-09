@@ -415,8 +415,11 @@ void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* tra
     float u_scale = sprite->_uv_scale[0];
     float v_scale = sprite->_uv_scale[1];
 
-    float u_offset = sprite->_uv_offset[0];
-    float v_offset = sprite->_uv_offset[1];
+    float u_start = sprite->_uv_start[0] * u_scale;
+    float v_start = sprite->_uv_start[1] * v_scale;
+
+    float u_end = sprite->_uv_end[0] * u_scale;
+    float v_end = sprite->_uv_end[1] * v_scale;
 
     uint32 uv_size = sizeof(float) * 2;
     float* uvs = &vertex_data[3];
@@ -424,23 +427,23 @@ void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* tra
 
     float* uv_0 = &uvs[0];
     memcpy(uv_0, quad_uvs, uv_size);
-    uv_0[0] *= u_scale + u_offset;
-    uv_0[1] *= v_scale + v_offset;
+    uv_0[0] = u_start;
+    uv_0[1] = v_start;
 
     float* uv_1 = uv_0 + QUAD_DATA._vertex_stride;
     memcpy(uv_1, quad_uvs + QUAD_DATA._vertex_stride, uv_size);
-    uv_1[0] *= u_scale + u_offset;
-    uv_1[1] *= v_scale + v_offset;
+    uv_1[0] = u_end;
+    uv_1[1] = v_start;
 
     float* uv_2 = uv_1 + QUAD_DATA._vertex_stride;
     memcpy(uv_2, quad_uvs + QUAD_DATA._vertex_stride * 2, uv_size);
-    uv_2[0] *= u_scale + u_offset;
-    uv_2[1] *= v_scale + v_offset;
+    uv_2[0] = u_end;
+    uv_2[1] = v_end;
 
     float* uv_3 = uv_2 + QUAD_DATA._vertex_stride;
     memcpy(uv_3, quad_uvs + QUAD_DATA._vertex_stride * 3, uv_size);
-    uv_3[0] *= u_scale + u_offset;
-    uv_3[1] *= v_scale + v_offset;
+    uv_3[0] = u_start;
+    uv_3[1] = v_end;
 
     // write colors
     uint32 color_size = 4 * sizeof(float);

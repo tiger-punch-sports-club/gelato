@@ -118,6 +118,22 @@ int main(void)
 	the_main_sprite._transform._position[2] = 8.f;
 
 
+	//> sprite sheet demo
+	uint32 lean_cup_sheet_texture_width = 0;
+	uint32 lean_cup_sheet_texture_height = 0;
+	GelatoTextureId lean_cup_sheet = load_texture("content/lean_cup_sheet.png", lean_cup_sheet_texture_width, lean_cup_sheet_texture_height);
+
+	GelatoSpriteSheetDescription sprite_sheet_desc = { 0 };
+	sprite_sheet_desc._width = lean_cup_sheet_texture_width;
+	sprite_sheet_desc._height = lean_cup_sheet_texture_height;
+	sprite_sheet_desc._tile_size_x = 59;
+	sprite_sheet_desc._tile_size_y = 88;
+
+	GelatoSpriteSheetInfo sprite_sheet_info = gelato_create_sprite_sheet(sprite_sheet_desc, lean_cup_sheet);
+	gelato_change_sprite_tile(&the_main_sprite, 0, 0, sprite_sheet_info);
+
+	//> Sprite sheet demo end
+
 	GelatoTransform camera_transform = {};
 	camera_transform._scale[0] = 1.0f;
 	camera_transform._scale[1] = 1.0f;
