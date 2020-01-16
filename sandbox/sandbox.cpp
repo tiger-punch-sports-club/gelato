@@ -23,8 +23,7 @@ void on_window_resized(GLFWwindow* window, int width, int height)
 GelatoTextureId load_texture(const char* path, uint32& width, uint32& height)
 {
 	// load texture
-	const char* pineapple_image_path = path;
-	FILE* file = fopen(pineapple_image_path, "rb");
+	FILE* file = fopen(path, "rb");
 	int image_width, image_height, image_channels;
 	unsigned char* data = stbi_load_from_file(file, &image_width, &image_height, &image_channels, 0);
 	fclose(file);
@@ -130,7 +129,7 @@ int main(void)
 	sprite_sheet_desc._tile_size_y = 88;
 
 	GelatoSpriteSheetInfo sprite_sheet_info = gelato_create_sprite_sheet(sprite_sheet_desc, lean_cup_sheet);
-	gelato_change_sprite_tile(&the_main_sprite, 0, 0, sprite_sheet_info);
+	gelato_change_sprite_tile(&the_main_sprite, 0, 1, sprite_sheet_info);
 
 	//> Sprite sheet demo end
 
