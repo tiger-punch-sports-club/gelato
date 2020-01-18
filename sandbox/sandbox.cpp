@@ -188,10 +188,10 @@ int main(void)
 		static float angle_speed = 40.0f;
 		static float move_speed = 10.0f;
 
-		pineapple_sprite._transform._angle_degrees += 0.016f * angle_speed;
-		if(pineapple_sprite._transform._angle_degrees >= 360)
+		pineapple_sprite._transform._rotation[2] += 0.016f * angle_speed;
+		if(pineapple_sprite._transform._rotation[2] >= 360)
 		{
-			pineapple_sprite._transform._angle_degrees = 0;
+			pineapple_sprite._transform._rotation[2] = 0;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_RIGHT))
@@ -214,10 +214,10 @@ int main(void)
 		for (int i = 0; i < sprites.size() / 2; ++i)
 		{
 			GelatoSprite& sprite = sprites.at(i * 2);
-			sprite._transform._angle_degrees -= 0.016f * angle_speed / 8;
-			if(sprite._transform._angle_degrees <= -360.0f)
+			sprite._transform._rotation[2] -= 0.016f * angle_speed / 8;
+			if(sprite._transform._rotation[2] <= -360.0f)
 			{
-				sprite._transform._angle_degrees = 0.0f;
+				sprite._transform._rotation[2] = 0.0f;
 			}
 		}
 

@@ -53,17 +53,38 @@ void gelato_make_translation_matrix(float x, float y, float z, float* dest)
     dest[14] = z;
 }
 
-void gelato_make_rotation_matrix(float angle_in_degrees, float* dest)
+void gelato_make_rotation_matrix(float x, float y, float z, float* dest)
 {
-    float angle_radians = (angle_in_degrees / 180.0f) * PI;
-    float cos = cosf(angle_radians);
-    float sin = sinf(angle_radians);
+    float x_r = (x / 180.0f) * PI;
+    float y_r = (y / 180.0f) * PI;
+    float z_r = (z / 180.0f) * PI;
 
-    dest[0] = cos; 
-    dest[1] = sin; 
+    // To Quaternion
+    float c1 = cosf(y_r * 0.5f);
+    float s1 = sinf(y_r * 0.5f);
+                                    
+    float c2 = cosf(z_r * 0.5f);
+    float s2 = sinf(z_r * 0.5f);
+                                    
+    float c3 = cosf(x_r * 0.5f);
+    float s3 = sinf(x_r * 0.5f);
 
-    dest[4] = -sin;
-    dest[5] = cos;
+    float c1c2 = c1 * c2;
+    float s1s2 = s1 * s2;
+
+    float qw	= c1c2 * c3 - s1s2 * s3;
+    float qx = c1c2 * s3 + s1s2 * c3;
+    float qy = s1 * c2 * c3 + c1 * s2 * s3;
+    float qz = c1 * s2 * c3 - s1 * c2 * s3;
+
+    float forward[3] = { 2.0f * (qx * qz - qw * qy), 2.0f * (qy * qz + qw * qx), 1.0f - 2.0f * (qx * qx + qy * qy) };
+    float up[3] = { 2.0f * (qx * qy + qw * qz), 1.0f - 2.0f * (qx * qx + qz * qz), 2.0f * (qy * qz - qw * qx) };
+    float right[3] = { 1.0f - 2.0f * (qy * qy + qz * qz), 2.0f * (qx * qy - qw * qz), 2.0f * (qx * qz + qw * qy) };
+
+    dest[0] = right[0];    dest[4] = right[1];    dest[8] = right[2];     dest[12] = 0.0f;
+    dest[1] = up[0];       dest[5] = up[1];       dest[9] = up[2];        dest[13] = 0.0f;
+    dest[2] = forward[0];  dest[6] = forward[1];  dest[10] = forward[2];  dest[14] = 0.0f;
+    dest[3] = 0.0f;        dest[7] = 0.0f;        dest[11] = 0.0f;        dest[15] = 1.0f;
 }
 
 void gelato_make_identity_matrix(float* dest)
@@ -102,7 +123,7 @@ void gelato_make_transformation(GelatoTransform* transform, float* dest)
 
     float rotation_matrix[16];
     gelato_make_identity_matrix(&rotation_matrix[0]);
-    gelato_make_rotation_matrix(transform->_angle_degrees, &rotation_matrix[0]);
+    gelato_make_rotation_matrix(transform->_rotation[0], transform->_rotation[1], transform->_rotation[2], &rotation_matrix[0]);
 
     float tr_matrix[16];
     gelato_make_identity_matrix(&tr_matrix[0]);

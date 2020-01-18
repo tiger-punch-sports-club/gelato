@@ -14,7 +14,9 @@ GelatoSprite gelato_create_sprite(GelatoTextureId texture)
             ._scale[0] = 1.0f,
             ._scale[1] = 1.0f,
 
-            ._angle_degrees = 0.0f
+            ._rotation[0] = 0.0f,
+            ._rotation[1] = 0.0f,
+            ._rotation[2] = 0.0f
         },
         ._uv_scale[0] = 1.0f,
         ._uv_scale[1] = 1.0f,
