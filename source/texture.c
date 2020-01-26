@@ -50,13 +50,15 @@ GelatoTextureId gelato_create_texture(GelatoTextureDescription texture_descripti
     GL_CHECK(glGenTextures(1, &texture_id));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_id));
 
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, (GLint) texture_description._internal_format._gl_enum, (GLsizei) texture_description._width, (GLsizei) texture_description._height, 0, (GLenum) texture_description._format._gl_enum, (GLenum) texture_description._type._gl_enum, data));
-
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (GLint) texture_description._min_filter._gl_enum));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (GLint) texture_description._mag_filter._gl_enum));
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (GLint) texture_description._wrap_s._gl_enum));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (GLint) texture_description._wrap_t._gl_enum));
+
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, (GLint) texture_description._internal_format._gl_enum, (GLsizei) texture_description._width, (GLsizei) texture_description._height, 0, (GLenum) texture_description._format._gl_enum, (GLenum) texture_description._type._gl_enum, data));
+	
+	GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 

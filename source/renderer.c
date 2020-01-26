@@ -69,7 +69,7 @@ typedef struct Node
     uint32 _next;
 } Node;
 
-struct
+typedef struct RendererState
 {
     uint32 _bound_sprites;
     uint32 _bound_textures;
@@ -77,7 +77,9 @@ struct
 
     GelatoTextureId _bound_textures_list[CFG_MAX_BOUND_TEXTURES];
     float _vertex_data[CFG_MAX_SPRITES_PER_BATCH * CFG_FLOATS_PER_SPRITE];
-} BATCH_RENDERER_STATE =
+} RendererState;
+
+RendererState BATCH_RENDERER_STATE =
 {
     ._bound_sprites = 0,
     ._bound_textures = 0,
@@ -158,10 +160,9 @@ void init_shaders(GelatoRenderer* renderer)
     };
 
     char buffer[1024];
-
     for (uint32 i = 0; i < CFG_MAX_BOUND_TEXTURES; i++)
     {
-        sprintf(buffer, "TexturePool[%d]", i);
+        sprintf_s(buffer, sizeof(buffer), "TexturePool[%d]", i);
         renderer->_sprite_shader._texture_pool_location[i] = glGetUniformLocation(shader_program._id, (const GLchar*) &buffer);
     }
 }
@@ -384,12 +385,11 @@ void render_sprites(GelatoRenderer* renderer, GelatoSprite* sorted_sprites, uint
             reset_tracking();
         }
     }
-
 }
 
 void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* transform)
 {
-    uint32 current_offset = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._vertex_stride * QUAD_DATA._vertex_count;
+    uint64 current_offset = BATCH_RENDERER_STATE._bound_sprites * QUAD_DATA._vertex_stride * QUAD_DATA._vertex_count;
 
     float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
 
@@ -463,17 +463,17 @@ void submit(GelatoRenderer* renderer, GelatoSprite* sprite, GelatoTransform* tra
     uint32 texture_index = 0;
     texture_list_contains(sprite->_texture, &texture_index);
 
-    float* texture_index_0 = color_0 + 4;
-    *texture_index_0 = (float) texture_index;
+    float* texture_index_0 = &vertex_data[9];
+    *texture_index_0 = (float)(texture_index + 0.25f);
 
     float* texture_index_1 = texture_index_0 + QUAD_DATA._vertex_stride;
-    *texture_index_1 = (float) texture_index;
+    *texture_index_1 = (float)(texture_index + 0.25f);
 
     float* texture_index_2 = texture_index_1 + QUAD_DATA._vertex_stride;
-    *texture_index_2 = (float) texture_index;
+    *texture_index_2 = (float)(texture_index + 0.25f);
 
     float* texture_index_3 = texture_index_2 + QUAD_DATA._vertex_stride;
-    *texture_index_3 = (float) texture_index;
+    *texture_index_3 = (float)(texture_index + 0.25f);
 
     BATCH_RENDERER_STATE._bound_sprites++;
 }
