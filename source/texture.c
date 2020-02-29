@@ -6,12 +6,14 @@ const struct GelatoTextureFormats GelatoTextureFormats =
 {
     ._rgb = { GL_RGB },
     ._rgba = { GL_RGBA },
+	._depth_component = { GL_DEPTH_COMPONENT }
 };
 
 const struct GelatoTextureInternalFormats GelatoTextureInternalFormats =
 {
     ._rgb8 = { GL_RGB8 },
     ._rgba8 = { GL_RGBA8 },
+	._depth_component_32f = { GL_DEPTH_COMPONENT32F }
 };
 
 const struct GelatoTextureTypes GelatoTextureTypes =

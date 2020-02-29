@@ -58,12 +58,14 @@ extern const struct GelatoTextureFormats
 {
     GelatoTextureFormat _rgb;
     GelatoTextureFormat _rgba;
+    GelatoTextureFormat _depth_component;
 } GelatoTextureFormats;
 
 extern const struct GelatoTextureInternalFormats
 {
     GelatoTextureInternalFormat _rgb8;
     GelatoTextureInternalFormat _rgba8;
+    GelatoTextureInternalFormat _depth_component_32f;
 } GelatoTextureInternalFormats;
 
 extern const struct GelatoTextureTypes

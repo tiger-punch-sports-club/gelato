@@ -20,6 +20,11 @@ typedef struct GelatoShaderId
     uint32 _id;
 } GelatoShaderId;
 
+typedef struct GelatoFramebufferId
+{
+	uint32 _id;
+} GelatoFramebufferId;
+
 typedef struct GelatoRendererDescription
 {
     uint32 _render_width;
@@ -43,8 +48,15 @@ typedef struct GelatoSimpleSpriteShader
     int32 _uv_scale_location;
     int32 _sprite_texture_location;
     int32 _texture_pool_location[CFG_MAX_BOUND_TEXTURES];
-
 } GelatoSimpleSpriteShader;
+
+typedef struct GelatoDitheringShader
+{
+	GelatoShaderId _shader;
+	int32 _vertex_attribute_location;
+	int32 _uv_attribute_location;
+	int32 _dithering_texture_location;
+} GelatoDitheringShader;
 
 typedef struct GelatoRenderer
 {
@@ -58,6 +70,12 @@ typedef struct GelatoRenderer
     float _pixel_scale_y;
 
     GelatoSimpleSpriteShader _sprite_shader;
+	GelatoDitheringShader _dithering_shader;
+
+	GelatoFramebufferId _framebuffer_id;
+	GelatoTextureId _color_render_target;
+	GelatoTextureId _depth_render_target;
+	GelatoTextureId _post_processing_color_render_target;
 
     float _projection_matrix[16];
     float _clear_color_letter_box[3];
