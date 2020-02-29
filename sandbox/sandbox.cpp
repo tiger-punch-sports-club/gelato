@@ -44,19 +44,20 @@ GelatoTextureId load_texture(const char* path, uint32& width, uint32& height)
 	}
 
 	// create texture
+
+	GelatoTextureDescription desc = {};
+	desc._width = (uint32)image_width;
+	desc._height = (uint32)image_height;
+	desc._format = GelatoTextureFormats._rgba;
+	desc._internal_format = GelatoTextureInternalFormats._rgba8;
+	desc._type = GelatoTextureTypes._unsigned_byte;
+	desc._wrap_s = GelatoTextureWraps._clamp_to_edge;
+	desc._wrap_t = GelatoTextureWraps._clamp_to_edge;
+	desc._min_filter = GelatoTextureMinFilters._nearest;
+	desc._mag_filter = GelatoTextureMagFilters._nearest;
+
 	GelatoTextureId texture = gelato_create_texture(
-		(GelatoTextureDescription) 
-		{
-		    ._width = (uint32)image_width,
-		    ._height = (uint32)image_height,
-		    ._format = GelatoTextureFormats._rgba,
-			._internal_format = GelatoTextureInternalFormats._rgba8,
-			._type = GelatoTextureTypes._unsigned_byte,
-			._wrap_s = GelatoTextureWraps._clamp_to_edge,
-			._wrap_t = GelatoTextureWraps._clamp_to_edge,
-			._min_filter = GelatoTextureMinFilters._nearest,
-    		._mag_filter = GelatoTextureMagFilters._nearest
-		}, 
+		desc,
 		(void*) data
 	);
 
