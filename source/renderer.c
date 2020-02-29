@@ -105,6 +105,7 @@ void set_gl_state_post_render();
 void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type);
+void make_projection_matrix(GelatoRenderer* renderer);
 
 // --------------------
 // batch rendering
@@ -134,41 +135,72 @@ void check_shader_error(uint32 shader)
 
 void init_shaders(GelatoRenderer* renderer)
 {
-    GelatoShaderId shader_program = { glCreateProgram() };
-    uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
-    uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV);\nif (color.a <= 0.0f) {\ndiscard;\n}\n outColor = color * outVertexColor;\n}");
+	{	
+		// GelatoSimpleSpriteShader
+		GelatoShaderId shader_program = { glCreateProgram() };
+		uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
+		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV);\nif (color.a <= 0.0f) {\ndiscard;\n}\n outColor = color * outVertexColor;\n}");
 
-    GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
-    GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
+		GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
+		GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
 
-    GL_CHECK(glLinkProgram(shader_program._id));
-    GL_CHECK(glUseProgram(shader_program._id));
+		GL_CHECK(glLinkProgram(shader_program._id));
+		GL_CHECK(glUseProgram(shader_program._id));
 
-    GL_CHECK(glDeleteShader(vertex_shader));
-    GL_CHECK(glDeleteShader(fragment_shader));
+		GL_CHECK(glDeleteShader(vertex_shader));
+		GL_CHECK(glDeleteShader(fragment_shader));
 
-    GL_CHECK(glUseProgram(0));
+		GL_CHECK(glUseProgram(0));
 
-    renderer->_sprite_shader = (GelatoSimpleSpriteShader)
-    {
-        ._shader = shader_program,
-        ._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
-        ._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
-        ._color_attribute_location = glGetAttribLocation(shader_program._id, "VertexColor"),
-        ._texture_index_attribute_location = glGetAttribLocation(shader_program._id, "VertexTextureIndex"),
-        ._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
-        ._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
-        ._uv_offset_location = glGetUniformLocation(shader_program._id, "UvOffset"),
-        ._uv_scale_location = glGetUniformLocation(shader_program._id, "UvScale"),
-        ._sprite_texture_location = glGetUniformLocation(shader_program._id, "SpriteTexture"),
-    };
+		renderer->_sprite_shader = (GelatoSimpleSpriteShader)
+		{
+			._shader = shader_program,
+			._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
+			._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
+			._color_attribute_location = glGetAttribLocation(shader_program._id, "VertexColor"),
+			._texture_index_attribute_location = glGetAttribLocation(shader_program._id, "VertexTextureIndex"),
+			._model_matrix_location = glGetUniformLocation(shader_program._id, "ModelMatrix"),
+			._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
+			._uv_offset_location = glGetUniformLocation(shader_program._id, "UvOffset"),
+			._uv_scale_location = glGetUniformLocation(shader_program._id, "UvScale"),
+			._sprite_texture_location = glGetUniformLocation(shader_program._id, "SpriteTexture")
+		};
 
-    char buffer[1024];
-    for (uint32 i = 0; i < CFG_MAX_BOUND_TEXTURES; i++)
-    {
-        sprintf_s(buffer, sizeof(buffer), "TexturePool[%d]", i);
-        renderer->_sprite_shader._texture_pool_location[i] = glGetUniformLocation(shader_program._id, (const GLchar*) &buffer);
-    }
+		char buffer[1024];
+		for (uint32 i = 0; i < CFG_MAX_BOUND_TEXTURES; i++)
+		{
+			sprintf_s(buffer, sizeof(buffer), "TexturePool[%d]", i);
+			renderer->_sprite_shader._texture_pool_location[i] = glGetUniformLocation(shader_program._id, (const GLchar*)&buffer);
+		}
+	}
+
+	{	
+		// DitheringShader
+		GelatoShaderId shader_program = { glCreateProgram() };
+		uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\n}");
+		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D ColorTexture;\nuniform sampler2D DitheringTexture;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(ColorTexture, outVertexUV);\noutColor = color * vec4(1.0, 0.2, 0.2, 1.0);\n}");
+
+		GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
+		GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
+
+		GL_CHECK(glLinkProgram(shader_program._id));
+		GL_CHECK(glUseProgram(shader_program._id));
+
+		GL_CHECK(glDeleteShader(vertex_shader));
+		GL_CHECK(glDeleteShader(fragment_shader));
+
+		GL_CHECK(glUseProgram(0));
+
+		renderer->_dithering_shader = (GelatoDitheringShader) 
+		{
+			._shader = shader_program,
+			._vertex_attribute_location = glGetAttribLocation(shader_program._id, "VertexPosition"),
+			._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
+			._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
+			._color_texture_location = glGetUniformLocation(shader_program._id, "ColorTexture"),
+			._dithering_texture_location = glGetUniformLocation(shader_program._id, "DitheringTexture")
+		};
+	}
 }
 
 void destroy_shader(GelatoShaderId* shader)
@@ -308,7 +340,6 @@ void init_quad(GelatoRenderer* renderer)
     uint32 offset = 0;
     for(uint32 i = 0; i < 6 * CFG_MAX_SPRITES_PER_BATCH;)
     {
-
         indices[i++] = offset + 0;
         indices[i++] = offset + 1;
         indices[i++] = offset + 2;
@@ -344,6 +375,18 @@ uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, G
     return handle;
 }
 
+void make_projection_matrix(GelatoRenderer* renderer)
+{
+	float left = 0.0f;
+	float right = (float)renderer->_window_width;
+	float top = (float)renderer->_window_height;
+	float bottom = 0.0f;
+	float near_plane = -10.0f;
+	float far_plane = 10.0f;
+
+	gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
+}
+
 void reset_tracking()
 {
     for (uint32 i = 0; i < BATCH_RENDERER_STATE._bound_textures; ++i)
@@ -376,33 +419,102 @@ void begin_render(GelatoRenderer* renderer)
 
     GL_CHECK(glEnableVertexAttribArray(renderer->_sprite_shader._texture_index_attribute_location));
     GL_CHECK(glVertexAttribPointer(renderer->_sprite_shader._texture_index_attribute_location, 1, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*) (9 * sizeof(float))));
-
-	// bind fbo
 }
 
 void end_render(GelatoRenderer* renderer)
 {
-    GL_CHECK(glBindVertexArray(0));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	{
+		// unbind simple shader
+		GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._texture_index_attribute_location));
+		GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._color_attribute_location));
+		GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
+		GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
+	}
 
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._texture_index_attribute_location));
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._color_attribute_location));
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._uv_attribute_location));
-    GL_CHECK(glDisableVertexAttribArray(renderer->_sprite_shader._vertex_attribute_location));
-    GL_CHECK(glUseProgram(0));
+    {
+		// perform post processing here
+		GL_CHECK(glUseProgram(renderer->_dithering_shader._shader._id));
 
-	GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-	GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->_framebuffer_id._id));
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderer->_framebuffer_id._id));
+		GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->_post_processing_color_render_target._id, 0));
+		GL_CHECK(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
+		GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
-	// Blit framebuffer to screen
-	GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
-	GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
-	GL_CHECK(glViewport(x, y, renderer->_render_width, renderer->_render_height));
-	GL_CHECK(glScissor(x, y, renderer->_render_width, renderer->_render_height));
-	GL_CHECK(glDrawBuffer(GL_BACK));
-	GL_CHECK(glBlitFramebuffer(0, 0, renderer->_render_width, renderer->_render_height, x, y, x + renderer->_render_width, y + renderer->_render_height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-	GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+		GL_CHECK(glActiveTexture(GL_TEXTURE0));
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, renderer->_color_render_target._id));
+		GL_CHECK(glUniform1i(renderer->_dithering_shader._color_texture_location, 0));
+
+		float ortho_matrix[16];
+		gelato_make_projection_matrix(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, &ortho_matrix[0]);
+		GL_CHECK(glUniformMatrix4fv(renderer->_dithering_shader._view_projection_matrix_location, 1, GL_FALSE, &ortho_matrix[0]));
+
+		// todo: set dithering texture
+		// todo: write shader code
+
+		{
+			uint64 current_offset = 0;
+			float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
+			
+			GelatoTransform transform = 
+			{
+				._position[0] = 0.0f,
+				._position[1] = 0.0f,
+				._position[2] = 0.0f,
+
+				._scale[0] = 1.0f,
+				._scale[1] = 1.0f,
+
+				._rotation[0] = 0.0f,
+				._rotation[1] = 0.0f,
+				._rotation[2] = 0.0f 
+			};
+
+			// create sprite transformation
+			float model_matrix[16];
+			gelato_make_transformation(&transform, &model_matrix[0]);
+
+			// write position
+			memcpy(&vertex_data[0], &QUAD_DATA._vertices[0], QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
+		
+			GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES, &BATCH_RENDERER_STATE._vertex_data));
+
+			GL_CHECK(glEnableVertexAttribArray(renderer->_dithering_shader._vertex_attribute_location));
+			GL_CHECK(glVertexAttribPointer(renderer->_dithering_shader._vertex_attribute_location, 3, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, NULL));
+
+			GL_CHECK(glEnableVertexAttribArray(renderer->_dithering_shader._uv_attribute_location));
+			GL_CHECK(glVertexAttribPointer(renderer->_dithering_shader._uv_attribute_location, 2, GL_FLOAT, GL_FALSE, QUAD_DATA._vertex_stride_bytes, (GLvoid*)(3 * sizeof(float))));
+
+			GL_CHECK(glDisable(GL_DEPTH_TEST));
+			GL_CHECK(glDisable(GL_CULL_FACE));
+			GL_CHECK(glDrawElements(GL_TRIANGLES, QUAD_DATA._index_count, GL_UNSIGNED_INT, 0));
+			GL_CHECK(glEnable(GL_DEPTH_TEST));
+			GL_CHECK(glEnable(GL_CULL_FACE));
+		}
+    }
+
+    {
+		// Blit framebuffer to screen
+		GL_CHECK(glUseProgram(0));
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->_framebuffer_id._id));
+		GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->_post_processing_color_render_target._id, 0));
+
+		GLint x = renderer->_window_width / 2 - renderer->_render_width / 2;
+		GLint y = renderer->_window_height / 2 - renderer->_render_height / 2;
+		GL_CHECK(glViewport(x, y, renderer->_render_width, renderer->_render_height));
+		GL_CHECK(glScissor(x, y, renderer->_render_width, renderer->_render_height));
+
+		GL_CHECK(glDrawBuffer(GL_BACK));
+		GL_CHECK(glBlitFramebuffer(0, 0, renderer->_render_width, renderer->_render_height, x, y, x + renderer->_render_width, y + renderer->_render_height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+    }
+
+	{	// Unbind vertex arrays
+		GL_CHECK(glBindVertexArray(0));
+		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	}
 	
 }
 
@@ -671,19 +783,12 @@ void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint3
     renderer->_window_height = window_height;
 
     fit_to_virtual_resolution(renderer->_window_width, renderer->_window_height, renderer->_virtual_target_width, renderer->_virtual_target_height, &renderer->_render_width, &renderer->_render_height, &renderer->_pixel_scale_x, &renderer->_pixel_scale_y);
-
-    float left = 0.0f;
-    float right = (float) renderer->_window_width;
-    float top = (float) renderer->_window_height;
-    float bottom = 0.0f;
-    float near_plane = -10.0f;
-    float far_plane = 10.0f;
-
-    gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 	resize_render_targets(renderer, renderer->_render_width, renderer->_render_height);
+
+	make_projection_matrix(renderer);
 }
 
-void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint64 sprites_count)
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint32 sprites_count)
 {
     set_gl_state_pre_render(renderer);
     begin_render(renderer);

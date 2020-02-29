@@ -146,7 +146,7 @@ int main(void)
 	float x_offset = static_cast<float>(-width) / 2.0f;
 	float y_offset = static_cast<float>(-height) / 2.0f;
 
-	uint32 max_x = renderer._virtual_target_width / static_cast<uint32>(width) * 1.5f;
+	uint32 max_x = static_cast<uint32>(renderer._virtual_target_width / static_cast<uint32>(width) * 1.5f);
 	uint32 count = 0;
 	for (int i = 0; i < 666; ++i)
 	{
@@ -219,7 +219,7 @@ int main(void)
 			}
 		}
 
-		gelato_render(&renderer, &camera_transform, sprites.data(), sprites.size());
+		gelato_render(&renderer, &camera_transform, sprites.data(), static_cast<uint32>(sprites.size()));
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}

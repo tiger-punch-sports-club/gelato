@@ -55,6 +55,8 @@ typedef struct GelatoDitheringShader
 	GelatoShaderId _shader;
 	int32 _vertex_attribute_location;
 	int32 _uv_attribute_location;
+	int32 _view_projection_matrix_location;
+	int32 _color_texture_location;
 	int32 _dithering_texture_location;
 } GelatoDitheringShader;
 
@@ -86,4 +88,4 @@ GelatoRenderer gelato_create_renderer(GelatoRendererDescription renderer_descrip
 void gelato_initialize_renderer(GelatoRenderer* renderer);
 void gelato_deinitialize_renderer(GelatoRenderer* renderer);
 void gelato_renderer_resize(GelatoRenderer* renderer, uint32 window_width, uint32 window_height);
-void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint64 sprites_count);
+void gelato_render(GelatoRenderer* renderer, GelatoTransform* camera_transform, GelatoSprite* sorted_sprites, uint32 sprites_count);

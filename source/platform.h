@@ -17,7 +17,7 @@ typedef long long			int64;
 void gelato_check_gl_error(const char* file_name, int line_number);
 
 #define GELATO_HASH_SEED 0xCAFEBABE
-#undef GELATO_DEBUG
+#define GELATO_DEBUG
 
 #ifdef GELATO_DEBUG
     #define GL_CHECK(function)\
