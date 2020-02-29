@@ -85,7 +85,19 @@ RendererState BATCH_RENDERER_STATE =
     ._bound_textures = 0,
     ._bound_batches = 0,
     ._bound_textures_list = { 0 }
-} ;
+};
+
+uint8 BAYER_FILTER[64] = 
+{
+	0, 128, 38, 160, 16, 136, 45, 168,		// 0
+	191, 66, 224, 96, 200, 74, 233, 103,	// 1
+	51, 176, 23, 142, 58, 184, 30, 152,		// 2
+	241, 111, 208, 81, 249, 119, 216, 88,	// 3
+	20, 139, 47, 170, 9, 131, 41, 163,		// 4
+	204, 77, 237, 107, 196, 70, 229, 100,	// 5
+	63, 188, 33, 155, 54, 179, 26, 146,		// 6
+	254, 123, 220, 92, 244, 115, 212, 85	// 7
+};
 
 // --------------------
 // helper functions
@@ -106,6 +118,7 @@ void init_quad(GelatoRenderer* renderer);
 void destroy_quad(GelatoRenderer* renderer);
 uint32 create_buffer(void* data, uint32 stride_in_bytes, uint32 element_count, GLenum buffer_type, GLenum buffer_type_usage_type);
 void make_projection_matrix(GelatoRenderer* renderer);
+void init_bayer_filter(GelatoRenderer* renderer);
 
 // --------------------
 // batch rendering
@@ -178,7 +191,7 @@ void init_shaders(GelatoRenderer* renderer)
 		// DitheringShader
 		GelatoShaderId shader_program = { glCreateProgram() };
 		uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\n}");
-		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D ColorTexture;\nuniform sampler2D DitheringTexture;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(ColorTexture, outVertexUV);\noutColor = color * vec4(1.0, 0.2, 0.2, 1.0);\n}");
+		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D ColorTexture;\nuniform sampler2D DitheringTexture;\nuniform vec2 TextureSize;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\n// Number of colors. 32 (5 bits) per channel\nconst vec3 _Colors = vec3(32.0);\nfloat channelError(float col, float colMin, float colMax)\n{\n    float range = abs(colMin - colMax);\n    float aRange = abs(col - colMin);\n    return aRange / range;\n}\nfloat ditheredChannel(float error, vec2 ditherBlockUV)\n{\n    float pattern = texture2D(DitheringTexture, ditherBlockUV).r;\n    return step(pattern, error);\n}\nfloat mix_f(float a, float b, float amt)\n{\n    return ((1.0 - amt) * a) + (b * amt);\n}\n/// YUV/RGB color space calculations\nvec3 RGBtoYUV(vec3 rgb) {\n    vec3 yuv;\n    yuv.r = rgb.r * 0.2126 + 0.7152 * rgb.g + 0.0722 * rgb.b;\n    yuv.g = (rgb.b - yuv.r) / 1.8556;\n    yuv.b = (rgb.r - yuv.r) / 1.5748;\n    // Adjust to work on GPU\n    yuv.gb += vec2(0.5, 0.5);\n    return yuv;\n}\nvec3 YUVtoRGB(vec3 yuv) {\n    yuv.gb -= 0.5;\n    return vec3(\n        yuv.r * 1.0 + yuv.g * 0.0 + yuv.b * 1.5748,\n        yuv.r * 1.0 + yuv.g * -0.187324 + yuv.b * -0.468124,\n        yuv.r * 1.0 + yuv.g * 1.8556 + yuv.b * 0.0);\n}\nvec3 ditherColor(vec3 col, vec2 uv, float xres, float yres) {\n    vec3 yuv = RGBtoYUV(col);\n    vec3 col1 = floor(yuv * _Colors) / _Colors;\n    vec3 col2 = ceil(yuv * _Colors) / _Colors;\n    \n    // Calculate dither texture UV based on the input texture\n    vec2 ditherBlockUV = uv * vec2(xres / 8.0, yres / 8.0);\n       yuv.x = mix_f(col1.x, col2.x, ditheredChannel(channelError(yuv.x, col1.x, col2.x), ditherBlockUV));\n    yuv.y = mix_f(col1.y, col2.y, ditheredChannel(channelError(yuv.y, col1.y, col2.y), ditherBlockUV));\n    yuv.z = mix_f(col1.z, col2.z, ditheredChannel(channelError(yuv.z, col1.z, col2.z), ditherBlockUV));\n        return(YUVtoRGB(yuv));\n}\nvoid main()\n{\n    vec4 color = texture2D(ColorTexture, outVertexUV);\n    outColor = vec4(ditherColor(color.rgb, outVertexUV, TextureSize.x, TextureSize.y), color.a);\n}\n");
 
 		GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
 		GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
@@ -198,7 +211,8 @@ void init_shaders(GelatoRenderer* renderer)
 			._uv_attribute_location = glGetAttribLocation(shader_program._id, "VertexUV"),
 			._view_projection_matrix_location = glGetUniformLocation(shader_program._id, "ViewProjectionMatrix"),
 			._color_texture_location = glGetUniformLocation(shader_program._id, "ColorTexture"),
-			._dithering_texture_location = glGetUniformLocation(shader_program._id, "DitheringTexture")
+			._dithering_texture_location = glGetUniformLocation(shader_program._id, "DitheringTexture"),
+			._texture_size_location = glGetUniformLocation(shader_program._id, "TextureSize")
 		};
 	}
 }
@@ -387,6 +401,21 @@ void make_projection_matrix(GelatoRenderer* renderer)
 	gelato_make_projection_matrix(left, right, bottom, top, near_plane, far_plane, &renderer->_projection_matrix[0]);
 }
 
+void init_bayer_filter(GelatoRenderer* renderer)
+{
+	renderer->_bayer_filter_texture = gelato_create_texture(((GelatoTextureDescription){
+		._width = 8,
+		._height = 8,
+		._format = GelatoTextureFormats._rgba,
+		._internal_format = GelatoTextureInternalFormats._rgba8,
+		._type = GelatoTextureTypes._unsigned_byte,
+		._wrap_s = GelatoTextureWraps._repeat,
+		._wrap_t = GelatoTextureWraps._repeat,
+		._min_filter = GelatoTextureMinFilters._nearest,
+		._mag_filter = GelatoTextureMagFilters._nearest
+	}), &BAYER_FILTER[0]);
+}
+
 void reset_tracking()
 {
     for (uint32 i = 0; i < BATCH_RENDERER_STATE._bound_textures; ++i)
@@ -445,38 +474,19 @@ void end_render(GelatoRenderer* renderer)
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, renderer->_color_render_target._id));
 		GL_CHECK(glUniform1i(renderer->_dithering_shader._color_texture_location, 0));
 
+		GL_CHECK(glActiveTexture(GL_TEXTURE1));
+		GL_CHECK(glBindTexture(GL_TEXTURE_2D, renderer->_bayer_filter_texture._id));
+		GL_CHECK(glUniform1i(renderer->_dithering_shader._dithering_texture_location, 1));
+
 		float ortho_matrix[16];
 		gelato_make_projection_matrix(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, &ortho_matrix[0]);
 		GL_CHECK(glUniformMatrix4fv(renderer->_dithering_shader._view_projection_matrix_location, 1, GL_FALSE, &ortho_matrix[0]));
-
-		// todo: set dithering texture
-		// todo: write shader code
+		
+		float texture_size[2] = { renderer->_render_width, renderer->_render_height };
+		GL_CHECK(glUniform2fv(renderer->_dithering_shader._texture_size_location, 1, &texture_size[0]));
 
 		{
-			uint64 current_offset = 0;
-			float* vertex_data = &BATCH_RENDERER_STATE._vertex_data[current_offset];
-			
-			GelatoTransform transform = 
-			{
-				._position[0] = 0.0f,
-				._position[1] = 0.0f,
-				._position[2] = 0.0f,
-
-				._scale[0] = 1.0f,
-				._scale[1] = 1.0f,
-
-				._rotation[0] = 0.0f,
-				._rotation[1] = 0.0f,
-				._rotation[2] = 0.0f 
-			};
-
-			// create sprite transformation
-			float model_matrix[16];
-			gelato_make_transformation(&transform, &model_matrix[0]);
-
-			// write position
-			memcpy(&vertex_data[0], &QUAD_DATA._vertices[0], QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
-		
+			memcpy(&BATCH_RENDERER_STATE._vertex_data[0], &QUAD_DATA._vertices[0], QUAD_DATA._vertex_stride_bytes * QUAD_DATA._vertex_count);
 			GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, CFG_SPRITE_SIZE_BYTES, &BATCH_RENDERER_STATE._vertex_data));
 
 			GL_CHECK(glEnableVertexAttribArray(renderer->_dithering_shader._vertex_attribute_location));
@@ -487,14 +497,19 @@ void end_render(GelatoRenderer* renderer)
 
 			GL_CHECK(glDisable(GL_DEPTH_TEST));
 			GL_CHECK(glDisable(GL_CULL_FACE));
+
 			GL_CHECK(glDrawElements(GL_TRIANGLES, QUAD_DATA._index_count, GL_UNSIGNED_INT, 0));
+
 			GL_CHECK(glEnable(GL_DEPTH_TEST));
 			GL_CHECK(glEnable(GL_CULL_FACE));
+
+			GL_CHECK(glDisableVertexAttribArray(renderer->_dithering_shader._vertex_attribute_location));
+			GL_CHECK(glDisableVertexAttribArray(renderer->_dithering_shader._uv_attribute_location));
 		}
     }
 
     {
-		// Blit framebuffer to screen
+		// blit framebuffer to screen
 		GL_CHECK(glUseProgram(0));
 		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
 		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->_framebuffer_id._id));
@@ -723,6 +738,7 @@ void gelato_initialize_renderer(GelatoRenderer* renderer)
         init_quad(renderer);
 		init_render_targets(renderer);
 		init_framebuffer(renderer);
+		init_bayer_filter(renderer);
         gelato_renderer_resize(renderer, renderer->_window_width, renderer->_window_height);
     }
     else
@@ -735,6 +751,7 @@ void gelato_deinitialize_renderer(GelatoRenderer* renderer)
 {
 	destroy_framebuffer(renderer);
 	destroy_render_targets(renderer);
+	gelato_destroy_texture(renderer->_bayer_filter_texture);
     destroy_shaders(renderer);
     destroy_quad(renderer);
 }

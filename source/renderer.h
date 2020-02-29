@@ -58,6 +58,7 @@ typedef struct GelatoDitheringShader
 	int32 _view_projection_matrix_location;
 	int32 _color_texture_location;
 	int32 _dithering_texture_location;
+	int32 _texture_size_location;
 } GelatoDitheringShader;
 
 typedef struct GelatoRenderer
@@ -78,6 +79,7 @@ typedef struct GelatoRenderer
 	GelatoTextureId _color_render_target;
 	GelatoTextureId _depth_render_target;
 	GelatoTextureId _post_processing_color_render_target;
+	GelatoTextureId _bayer_filter_texture;
 
     float _projection_matrix[16];
     float _clear_color_letter_box[3];
