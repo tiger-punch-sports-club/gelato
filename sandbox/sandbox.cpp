@@ -46,8 +46,8 @@ GelatoTextureId load_texture(const char* path, uint32& width, uint32& height)
 	// create texture
 
 	GelatoTextureDescription desc = {};
-	desc._width = (uint32)image_width;
-	desc._height = (uint32)image_height;
+	desc._width = static_cast<uint32>(image_width);
+	desc._height = static_cast<uint32>(image_height);
 	desc._format = GelatoTextureFormats._rgba;
 	desc._internal_format = GelatoTextureInternalFormats._rgba8;
 	desc._type = GelatoTextureTypes._unsigned_byte;
@@ -56,15 +56,12 @@ GelatoTextureId load_texture(const char* path, uint32& width, uint32& height)
 	desc._min_filter = GelatoTextureMinFilters._nearest;
 	desc._mag_filter = GelatoTextureMagFilters._nearest;
 
-	GelatoTextureId texture = gelato_create_texture(
-		desc,
-		(void*) data
-	);
+	GelatoTextureId texture = gelato_create_texture(desc,static_cast<void*>(data));
 
 	stbi_image_free(data);
 
-	width = (uint32)image_width;
-	height = (uint32)image_height;
+	width = static_cast<uint32>(image_width);
+	height = static_cast<uint32>(image_height);
 	return texture;
 }
 
@@ -85,7 +82,7 @@ int main(void)
 		glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	}
 
-	GLFWwindow *window = glfwCreateWindow(640, 480, "Gelato89 - Sandbox", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(640, 480, "Gelato89 - Sandbox", nullptr, nullptr);
   	glfwMakeContextCurrent(window);
 
 	GelatoRendererDescription description = { 0 };
@@ -146,10 +143,10 @@ int main(void)
 	float width = flamingo_texture_width * 0.28f;
 	float height = flamingo_texture_height * 0.28f;
 
-	float x_offset = (float)-width / 2.0f;
-	float y_offset = (float)-height / 2.0f;
+	float x_offset = static_cast<float>(-width) / 2.0f;
+	float y_offset = static_cast<float>(-height) / 2.0f;
 
-	uint32 max_x = renderer._virtual_target_width / (uint32)width * 1.5f;
+	uint32 max_x = renderer._virtual_target_width / static_cast<uint32>(width) * 1.5f;
 	uint32 count = 0;
 	for (int i = 0; i < 666; ++i)
 	{
@@ -163,7 +160,7 @@ int main(void)
 
 		sprite._transform._position[0] = x_offset;
 		sprite._transform._position[1] = y_offset;
-		sprite._transform._position[2] = ((float)rand() / (float)RAND_MAX) * 3.0f;
+		sprite._transform._position[2] = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 3.0f;
 
 		sprites.push_back(sprite);
 
@@ -171,7 +168,7 @@ int main(void)
 		if (count == max_x)
 		{
 			count = 0;
-			x_offset = (float)-width / 2.0f;
+			x_offset = static_cast<float>(-width) / 2.0f;
 			y_offset += 60;
 		}
 
