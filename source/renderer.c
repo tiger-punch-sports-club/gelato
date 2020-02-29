@@ -406,9 +406,9 @@ void init_bayer_filter(GelatoRenderer* renderer)
 	renderer->_bayer_filter_texture = gelato_create_texture(((GelatoTextureDescription){
 		._width = 8,
 		._height = 8,
-		._format = GelatoTextureFormats._rgba,
-		._internal_format = GelatoTextureInternalFormats._rgba8,
-		._type = GelatoTextureTypes._unsigned_byte,
+		._format = GelatoTextureFormats._rgb,
+		._internal_format = GelatoTextureInternalFormats._rgb8,
+		._type = GelatoTextureTypes._float,
 		._wrap_s = GelatoTextureWraps._repeat,
 		._wrap_t = GelatoTextureWraps._repeat,
 		._min_filter = GelatoTextureMinFilters._nearest,
