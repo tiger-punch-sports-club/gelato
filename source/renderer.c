@@ -87,17 +87,22 @@ RendererState BATCH_RENDERER_STATE =
     ._bound_textures_list = { 0 }
 };
 
-uint8 BAYER_FILTER[64] = 
+uint32 to_rgba_4(byte8 r, byte8 g, byte8 b, byte8 a)
 {
-	0, 128, 38, 160, 16, 136, 45, 168,		// 0
-	191, 66, 224, 96, 200, 74, 233, 103,	// 1
-	51, 176, 23, 142, 58, 184, 30, 152,		// 2
-	241, 111, 208, 81, 249, 119, 216, 88,	// 3
-	20, 139, 47, 170, 9, 131, 41, 163,		// 4
-	204, 77, 237, 107, 196, 70, 229, 100,	// 5
-	63, 188, 33, 155, 54, 179, 26, 146,		// 6
-	254, 123, 220, 92, 244, 115, 212, 85	// 7
-};
+	uint32 rgba = 0;
+
+	rgba |= a << 24;
+	rgba |= r << 16;
+	rgba |= g << 8;
+	rgba |= b << 0;
+
+	return rgba;
+}
+
+uint32 to_rgba_1(byte8 value)
+{
+	return to_rgba_4(value, value, value, 255);
+}
 
 // --------------------
 // helper functions
@@ -403,11 +408,23 @@ void make_projection_matrix(GelatoRenderer* renderer)
 
 void init_bayer_filter(GelatoRenderer* renderer)
 {
+	uint32 BAYER_FILTER[64] = { 
+		to_rgba_1(0), to_rgba_1(128), to_rgba_1(38), to_rgba_1(160), to_rgba_1(16), to_rgba_1(136), to_rgba_1(45), to_rgba_1(168),		// 0
+		to_rgba_1(191), to_rgba_1(66), to_rgba_1(224), to_rgba_1(96), to_rgba_1(200), to_rgba_1(74), to_rgba_1(233), to_rgba_1(103),	// 1
+		to_rgba_1(51), to_rgba_1(176), to_rgba_1(23), to_rgba_1(142), to_rgba_1(58), to_rgba_1(184), to_rgba_1(30), to_rgba_1(152),		// 2
+		to_rgba_1(241), to_rgba_1(111), to_rgba_1(208), to_rgba_1(81), to_rgba_1(249), to_rgba_1(119), to_rgba_1(216), to_rgba_1(88),	// 3
+		to_rgba_1(20), to_rgba_1(139), to_rgba_1(47), to_rgba_1(170), to_rgba_1(9), to_rgba_1(131), to_rgba_1(41), to_rgba_1(163),		// 4
+		to_rgba_1(204), to_rgba_1(77), to_rgba_1(237), to_rgba_1(107), to_rgba_1(196), to_rgba_1(70), to_rgba_1(229), to_rgba_1(100),	// 5
+		to_rgba_1(63), to_rgba_1(188), to_rgba_1(33), to_rgba_1(155), to_rgba_1(54), to_rgba_1(179), to_rgba_1(26), to_rgba_1(146),		// 6
+		to_rgba_1(254), to_rgba_1(123), to_rgba_1(220), to_rgba_1(92), to_rgba_1(244), to_rgba_1(115), to_rgba_1(212), to_rgba_1(85)	// 7 
+	};
+	
+
 	renderer->_bayer_filter_texture = gelato_create_texture(((GelatoTextureDescription){
 		._width = 8,
 		._height = 8,
-		._format = GelatoTextureFormats._rgb,
-		._internal_format = GelatoTextureInternalFormats._rgb8,
+		._format = GelatoTextureFormats._rgba,
+		._internal_format = GelatoTextureInternalFormats._rgba8,
 		._type = GelatoTextureTypes._unsigned_byte,
 		._wrap_s = GelatoTextureWraps._repeat,
 		._wrap_t = GelatoTextureWraps._repeat,
