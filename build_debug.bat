@@ -1,1 +1,1 @@
-"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" && "C:\Program Files\CMake\bin\cmake.EXE" --build "d:/Code/C/gelato89/build" --config Debug --target all -- -j 8
+"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" && "C:\Program Files\CMake\bin\cmake.EXE" --build "d:/Code/C/gelato/build" --config Debug --target all -- -j 8
