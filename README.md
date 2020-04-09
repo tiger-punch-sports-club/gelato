@@ -1,5 +1,5 @@
-# Gelato89
-Gelato89 is a c99-compliant, 2d only sprite renderer with order independent transparency.
+# Gelato
+Gelato is a c99-compliant, 2d only sprite renderer with order independent transparency.
 Nothing more, nothing less.
 
 API
@@ -40,7 +40,7 @@ Renderer
 
 ## How to create a renderer
 1. Create a GelatoRendererDescription
-1. GelatoRendererDescription consists of
+2. GelatoRendererDescription consists of
 ```c
     typedef struct GelatoRendererDescription
     {
@@ -52,14 +52,14 @@ Renderer
         float _clear_color_render_target[3];
     } GelatoRendererDescription;
 ```
-    2. window size is the actual size of the window
+    1. window size is the actual size of the window
     2. render width is the desired size. for example 1920x1080. This is then used as the desired resolution.
-    2. clear color letter box is the color for the black bars around the gameplay screen
-    2. clear color render target is the clear color for the gameplay screen
-1. call gelato_create_renderer() with the description. this will return a renderer handle
-1. call gelato_initialize_renderer() with the returned renderer handle
-1. in your update loop call gelato_render() when you are ready to render
-1. call gelato_deinitialize_renderer when your app shuts down to clear memory
+    3. clear color letter box is the color for the black bars around the gameplay screen
+    4. clear color render target is the clear color for the gameplay screen
+3. call gelato_create_renderer() with the description. this will return a renderer handle
+4. call gelato_initialize_renderer() with the returned renderer handle
+5. in your update loop call gelato_render() when you are ready to render
+6. call gelato_deinitialize_renderer when your app shuts down to clear memory
 
 Sprite
 =============================================================================================================
@@ -79,8 +79,8 @@ typedef struct GelatoSprite
 
 ## How to create a sprite
 1. [Create a texture](/texture/)
-1. Pass GelatoTextureId to gelato_create_sprite(). This will return a functioning sprite object
-    2. Adjust transform to your liking
+2. Pass GelatoTextureId to gelato_create_sprite(). This will return a functioning sprite object
+    1. Adjust transform to your liking
     2. Rember that the scale is in pixels and always relative to the given desired render target size specified in the GelatoRendererDescription.
 
 Texture
@@ -107,8 +107,8 @@ typedef struct GelatoTextureDescription
 
 ## Create a texture
 1. Since Gelato does not come with texturing loading out of the box, you have to load the textures using your own methods.
-1. After loading the texture, you need to provide a GelatoTextureDescription and a void* to the loaded texture data
-	2. There are static structs with predefined settings for all fields inside the description
+2. After loading the texture, you need to provide a GelatoTextureDescription and a void* to the loaded texture data
+	1. There are static structs with predefined settings for all fields inside the description
 	2. GelatoTextureMinFilters, GelatoTextureMagFilters, GelatoTextureWraps, GelatoTextureTypes, GelatoTextureInternalFormats, GelatoTextureFormats
 
 ```cpp
@@ -131,11 +131,10 @@ Transform
     {
         float _position[3];
         float _scale[2];
-        float _angle_degrees;
+        float _rotation[3];
     } GelatoTransform;
 ```
 
 Transform is in pixel scale. Positions and scale are in pixels and are always relative to the
 given render target size specified in the GelatoRendererDescription at creation. So a sprite might look more zoomed in
-at 1270 x 720 than it does in 1920 x 1080 render target size.
-The angles in degrees specify the rotation around the z-axis.
+at 1270 x 720 than it does in 1920 x 1080 render target size. The _rotation is in degrees.
