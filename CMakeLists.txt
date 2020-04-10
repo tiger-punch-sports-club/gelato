@@ -26,20 +26,3 @@ add_library(
     ${PROJECT_SOURCE_DIR}/utils.c
 )
 target_link_libraries(gelato PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE glew)
-
-# project sandbox
-project(gelato-sandbox CXX)
-SET (PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/sandbox")
-SET (GLFW_SOURCE_DIR "vendor/glfw-3.3")
-
-# glfw 3.3
-add_subdirectory(${GLFW_SOURCE_DIR})
-
-# gelato-sandbox cpp application
-add_executable(
-                gelato-sandbox 
-                ${PROJECT_SOURCE_DIR}/sandbox.cpp
-                ${PROJECT_SOURCE_DIR}/stb_image.c
-)
-target_include_directories(gelato-sandbox PRIVATE ${GLFW_SOURCE_DIR}/include)
-target_link_libraries(gelato-sandbox PUBLIC glfw ${GLFW_LIBRARIES} PRIVATE gelato)
