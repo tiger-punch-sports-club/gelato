@@ -24,5 +24,13 @@ add_library(
     ${PROJECT_SOURCE_DIR}/renderer.c
     ${PROJECT_SOURCE_DIR}/sprite.c
     ${PROJECT_SOURCE_DIR}/utils.c
+
+    ${PROJECT_SOURCE_DIR}/texture.h
+    ${PROJECT_SOURCE_DIR}/platform.h
+    ${PROJECT_SOURCE_DIR}/renderer.h
+    ${PROJECT_SOURCE_DIR}/sprite.h
+    ${PROJECT_SOURCE_DIR}/utils.h
+    ${PROJECT_SOURCE_DIR}/gelato.h
+    ${PROJECT_SOURCE_DIR}/gelato.hpp
 )
 target_link_libraries(gelato PUBLIC ${OPENGL_gl_LIBRARY} PRIVATE glew)
