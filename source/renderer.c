@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define _CRT_SECURE_NO_WARNINGS 
+
 // ----------------------
 // Sprite quad data
 // ----------------------
@@ -157,7 +159,7 @@ void init_shaders(GelatoRenderer* renderer)
 		// GelatoSimpleSpriteShader
 		GelatoShaderId shader_program = { glCreateProgram() };
 		uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nin vec4 VertexColor;\nin float VertexTextureIndex;\nout vec2 outVertexUV;\nout vec4 outVertexColor;\nout float outVertexTextureIndex;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\noutVertexColor = VertexColor;\noutVertexTextureIndex = VertexTextureIndex;\n}\n");
-		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture2D(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV);\nif (color.a <= 0.0f) {\ndiscard;\n}\n outColor = color * outVertexColor;\n}");
+		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D TexturePool[16];\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\nvoid main() {\nvec4 color = texture(TexturePool[int(floor(outVertexTextureIndex))], outVertexUV);\nif (color.a <= 0.0f) {\ndiscard;\n}\n outColor = color * outVertexColor;\n}");
 
 		GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
 		GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
@@ -187,7 +189,7 @@ void init_shaders(GelatoRenderer* renderer)
 		char buffer[1024];
 		for (uint32 i = 0; i < CFG_MAX_BOUND_TEXTURES; i++)
 		{
-			sprintf_s(buffer, sizeof(buffer), "TexturePool[%d]", i);
+			sprintf(buffer, "TexturePool[%d]", i);
 			renderer->_sprite_shader._texture_pool_location[i] = glGetUniformLocation(shader_program._id, (const GLchar*)&buffer);
 		}
 	}
@@ -196,7 +198,7 @@ void init_shaders(GelatoRenderer* renderer)
 		// DitheringShader
 		GelatoShaderId shader_program = { glCreateProgram() };
 		uint32 vertex_shader = compile_shader(GL_VERTEX_SHADER, "#version 150\nuniform mat4 ViewProjectionMatrix;\nin vec3 VertexPosition;\nin vec2 VertexUV;\nout vec2 outVertexUV;\nvoid main() {\noutVertexUV = VertexUV;\ngl_Position = ViewProjectionMatrix * vec4(VertexPosition, 1);\n}");
-		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D ColorTexture;\nuniform sampler2D DitheringTexture;\nuniform vec2 TextureSize;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\n// Number of colors. 32 (5 bits) per channel\nconst vec3 _Colors = vec3(32.0);\nfloat channelError(float col, float colMin, float colMax)\n{\n    float range = abs(colMin - colMax);\n    float aRange = abs(col - colMin);\n    return aRange / range;\n}\nfloat ditheredChannel(float error, vec2 ditherBlockUV)\n{\n    float pattern = texture2D(DitheringTexture, ditherBlockUV).r;\n    return step(pattern, error);\n}\nfloat mix_f(float a, float b, float amt)\n{\n    return ((1.0 - amt) * a) + (b * amt);\n}\n/// YUV/RGB color space calculations\nvec3 RGBtoYUV(vec3 rgb) {\n    vec3 yuv;\n    yuv.r = rgb.r * 0.2126 + 0.7152 * rgb.g + 0.0722 * rgb.b;\n    yuv.g = (rgb.b - yuv.r) / 1.8556;\n    yuv.b = (rgb.r - yuv.r) / 1.5748;\n    // Adjust to work on GPU\n    yuv.gb += vec2(0.5, 0.5);\n    return yuv;\n}\nvec3 YUVtoRGB(vec3 yuv) {\n    yuv.gb -= 0.5;\n    return vec3(\n        yuv.r * 1.0 + yuv.g * 0.0 + yuv.b * 1.5748,\n        yuv.r * 1.0 + yuv.g * -0.187324 + yuv.b * -0.468124,\n        yuv.r * 1.0 + yuv.g * 1.8556 + yuv.b * 0.0);\n}\nvec3 ditherColor(vec3 col, vec2 uv, float xres, float yres) {\n    vec3 yuv = RGBtoYUV(col);\n    vec3 col1 = floor(yuv * _Colors) / _Colors;\n    vec3 col2 = ceil(yuv * _Colors) / _Colors;\n    \n    // Calculate dither texture UV based on the input texture\n    vec2 ditherBlockUV = uv * vec2(xres / 8.0, yres / 8.0);\n       yuv.x = mix_f(col1.x, col2.x, ditheredChannel(channelError(yuv.x, col1.x, col2.x), ditherBlockUV));\n    yuv.y = mix_f(col1.y, col2.y, ditheredChannel(channelError(yuv.y, col1.y, col2.y), ditherBlockUV));\n    yuv.z = mix_f(col1.z, col2.z, ditheredChannel(channelError(yuv.z, col1.z, col2.z), ditherBlockUV));\n        return(YUVtoRGB(yuv));\n}\nvoid main()\n{\n    vec4 color = texture2D(ColorTexture, outVertexUV);\n    outColor = vec4(ditherColor(color.rgb, outVertexUV, TextureSize.x, TextureSize.y), color.a);\n}\n");
+		uint32 fragment_shader = compile_shader(GL_FRAGMENT_SHADER, "#version 150\nuniform sampler2D ColorTexture;\nuniform sampler2D DitheringTexture;\nuniform vec2 TextureSize;\nin vec2 outVertexUV;\nin vec4 outVertexColor;\nin float outVertexTextureIndex;\nout vec4 outColor;\n// Number of colors. 32 (5 bits) per channel\nconst vec3 _Colors = vec3(32.0);\nfloat channelError(float col, float colMin, float colMax)\n{\n    float range = abs(colMin - colMax);\n    float aRange = abs(col - colMin);\n    return aRange / range;\n}\nfloat ditheredChannel(float error, vec2 ditherBlockUV)\n{\n    float pattern = texture(DitheringTexture, ditherBlockUV).r;\n    return step(pattern, error);\n}\nfloat mix_f(float a, float b, float amt)\n{\n    return ((1.0 - amt) * a) + (b * amt);\n}\n/// YUV/RGB color space calculations\nvec3 RGBtoYUV(vec3 rgb) {\n    vec3 yuv;\n    yuv.r = rgb.r * 0.2126 + 0.7152 * rgb.g + 0.0722 * rgb.b;\n    yuv.g = (rgb.b - yuv.r) / 1.8556;\n    yuv.b = (rgb.r - yuv.r) / 1.5748;\n    // Adjust to work on GPU\n    yuv.gb += vec2(0.5, 0.5);\n    return yuv;\n}\nvec3 YUVtoRGB(vec3 yuv) {\n    yuv.gb -= 0.5;\n    return vec3(\n        yuv.r * 1.0 + yuv.g * 0.0 + yuv.b * 1.5748,\n        yuv.r * 1.0 + yuv.g * -0.187324 + yuv.b * -0.468124,\n        yuv.r * 1.0 + yuv.g * 1.8556 + yuv.b * 0.0);\n}\nvec3 ditherColor(vec3 col, vec2 uv, float xres, float yres) {\n    vec3 yuv = RGBtoYUV(col);\n    vec3 col1 = floor(yuv * _Colors) / _Colors;\n    vec3 col2 = ceil(yuv * _Colors) / _Colors;\n    \n    // Calculate dither texture UV based on the input texture\n    vec2 ditherBlockUV = uv * vec2(xres / 8.0, yres / 8.0);\n       yuv.x = mix_f(col1.x, col2.x, ditheredChannel(channelError(yuv.x, col1.x, col2.x), ditherBlockUV));\n    yuv.y = mix_f(col1.y, col2.y, ditheredChannel(channelError(yuv.y, col1.y, col2.y), ditherBlockUV));\n    yuv.z = mix_f(col1.z, col2.z, ditheredChannel(channelError(yuv.z, col1.z, col2.z), ditherBlockUV));\n        return(YUVtoRGB(yuv));\n}\nvoid main()\n{\n    vec4 color = texture(ColorTexture, outVertexUV);\n    outColor = vec4(ditherColor(color.rgb, outVertexUV, TextureSize.x, TextureSize.y), color.a);\n}\n");
 
 		GL_CHECK(glAttachShader(shader_program._id, vertex_shader));
 		GL_CHECK(glAttachShader(shader_program._id, fragment_shader));
