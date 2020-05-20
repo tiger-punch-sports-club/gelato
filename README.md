@@ -1,5 +1,5 @@
 # Gelato
-Gelato is a c99-compliant, 2d only sprite renderer with order independent transparency.
+Gelato is a c99-compliant, batch sprite renderer with order independent transparency.
 Nothing more, nothing less.
 
 API
@@ -138,3 +138,14 @@ Transform
 Transform is in pixel scale. Positions and scale are in pixels and are always relative to the
 given render target size specified in the GelatoRendererDescription at creation. So a sprite might look more zoomed in
 at 1270 x 720 than it does in 1920 x 1080 render target size. The _rotation is in degrees.
+
+Making it 3D
+=============================================================================================================
+## 3d perspective camera
+```cpp
+float aspect = static_cast<float>(_renderer._virtual_target_width) / static_cast<float>(_renderer._virtual_target_height);
+SupraHot::Math::Mat4 perspective_projection = SupraHot::Math::Mat4::project_perspective(75.0f, aspect, 0.05f, 100.0f);
+memcpy(&_renderer._projection_matrix[0], &perspective_projection.m[0][0], sizeof(float) * 16);
+_renderer._pixel_scale_x = 1.0f;
+_renderer._pixel_scale_y = 1.0f;
+```

@@ -65,12 +65,6 @@ struct
     uint32 _index_buffer;
 } QUAD;
 
-typedef struct Node
-{
-    uint32 _data;
-    uint32 _next;
-} Node;
-
 typedef struct RendererState
 {
     uint32 _bound_sprites;
@@ -236,6 +230,7 @@ void destroy_shader(GelatoShaderId* shader)
 void destroy_shaders(GelatoRenderer* renderer)
 {
     destroy_shader(&renderer->_sprite_shader._shader);
+    destroy_shader(&renderer->_dithering_shader._shader);
 }
 
 void init_framebuffer(GelatoRenderer* renderer)
